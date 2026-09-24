@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Prática de Descontos Financeiros</title>
+  
+  <!-- KaTeX para renderização de fórmulas matemáticas -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --bg-body: #f3f4f6;
+      --card-bg: #ffffff;
+      --border-color: #e5e7eb;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --success: #10b981;
+      --input-focus: #fbbf24;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: var(--bg-body); color: var(--text-main); padding: 20px; line-height: 1.5; }
+    .container { max-width: 1250px; margin: 0 auto; }
+
+    .locked-banner { display: none; background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 12px 20px; border-radius: 8px; font-weight: 700; margin-bottom: 20px; text-align: center; }
+
+    header { background: var(--card-bg); padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 24px; }
+    header h1 { font-size: 1.6rem; color: var(--primary); margin-bottom: 16px; font-weight: 700; }
+    
+    .student-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px; }
+    .input-group { display: flex; flex-direction: column; gap: 6px; }
+    .input-group label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
+    .input-group input { padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
+    .input-group input:focus { border-color: var(--primary); }
+
+    .progress-bar-container { background: #e5e7eb; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 10px; }
+    .progress-bar-fill { background: var(--primary); height: 100%; width: 0%; transition: width 0.3s ease; }
+    .progress-text { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-top: 6px; }
+
+    .nav-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px; }
+    .tab-btn { background: none; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 0.88rem; color: var(--text-muted); cursor: pointer; transition: all 0.2s; }
+    .tab-btn:hover { background: #e0e7ff; color: var(--primary); }
+    .tab-btn.active { background: var(--primary); color: #fff; }
+
+    .formula-banner { background: #f0f3ff; border: 1px solid #c7d2fe; padding: 16px 20px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px; font-size: 1.1rem; }
+    .formula-badge { background: #e0e7ff; color: var(--primary); font-weight: 700; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; text-transform: uppercase; white-space: nowrap; }
+
+    .table-card { background: var(--card-bg); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th, td { padding: 14px 18px; border-bottom: 1px solid var(--border-color); font-size: 0.92rem; vertical-align: top; }
+    th { background: #f9fafb; font-weight: 600; color: var(--text-muted); text-transform: uppercase; font-size: 0.78rem; letter-spacing: 0.05em; }
+    tr:last-child td { border-bottom: none; }
+
+    .cell-container { display: flex; flex-direction: column; gap: 6px; }
+    .cell-input { width: 100%; padding: 8px 12px; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; font-weight: 500; transition: all 0.2s; background: #fafafa; }
+    .cell-input:focus { background: #fffde7; border-color: var(--input-focus); box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2); outline: none; }
+    .cell-input:disabled { background: #f3f4f6; cursor: not-allowed; }
+
+    .result-box { display: none; background: #e0e7ff; border-left: 4px solid var(--primary); padding: 4px 10px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; color: var(--primary); margin-top: 2px; }
+    .result-box.visible { display: block; }
+
+    .actions-bar { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+    .btn { padding: 12px 28px; border: none; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: background 0.2s; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
+
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+    .modal.active { display: flex; }
+    .modal-content { background: white; padding: 32px; border-radius: 12px; max-width: 500px; width: 90%; text-align: center; }
+    .modal-content h2 { color: var(--primary); margin-bottom: 12px; }
+    .modal-content p { color: var(--text-muted); margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="locked-banner" id="locked-banner">
+    🔒 Exercício Finalizado e Enviado! Suas respostas foram salvas na planilha do professor e não podem mais ser editadas.
+  </div>
+
+  <header>
+    <h1>Prática de Descontos Financeiros</h1>
+    <div class="student-info">
+      <div class="input-group">
+        <label for="aluno-nome">Nome Completo do Aluno:</label>
+        <input type="text" id="aluno-nome" placeholder="Digite seu nome completo..." />
+      </div>
+      <div class="input-group">
+        <label for="aluno-turma">Turma:</label>
+        <input type="text" id="aluno-turma" placeholder="Ex: FIN-3A" />
+      </div>
+    </div>
+
+    <div>
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+      <div class="progress-text">
+        <span>Progresso de Respostas</span>
+        <span id="progress-percent">0 / 160 campos preenchidos</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="mudarAba(1)">1. Desconto comercial (mercadorias/serviços)</button>
+    <button class="tab-btn" onclick="mudarAba(2)">2. Desconto racional (mercadorias e serviços)</button>
+    <button class="tab-btn" onclick="mudarAba(3)">3. Desconto financeiro comercial</button>
+    <button class="tab-btn" onclick="mudarAba(4)">4. Desconto financeiro racional</button>
+  </div>
+
+  <div class="formula-banner">
+    <span class="formula-badge">Fórmulas da Aba</span>
+    <span id="formula-display">$$D_c = P \cdot i \quad \text{e} \quad PL = P - D_c$$</span>
+  </div>
+
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 10%;">Item</th>
+          <th style="width: 36%;">Situação e Dados do Exercício</th>
+          <th style="width: 27%;" id="th-f1">Primeira Fórmula</th>
+          <th style="width: 27%;" id="th-f2">Segunda Fórmula</th>
+        </tr>
+      </thead>
+      <tbody id="exercicios-tbody">
+      </tbody>
+    </table>
+  </div>
+
+  <div class="actions-bar">
+    <button class="btn btn-primary" id="btn-enviar" onclick="enviarRespostas()">Enviar Respostas</button>
+  </div>
+</div>
+
+<div class="modal" id="modal-sucesso">
+  <div class="modal-content">
+    <h2>🎉 Exercício Enviado!</h2>
+    <p id="modal-msg">Suas respostas foram registradas na planilha do professor com sucesso!</p>
+    <button class="btn btn-primary" onclick="fecharModal()">OK / Imprimir Relatório</button>
+  </div>
+</div>
+
+<script>
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx01dq83O3u7frABU2yJEg5N2E3X4wpKoQcS3VYc3_9DZ0as0uGX6DTSJrhrmG_c2Q/exec";
+
+  const BANCO_EXERCICIOS = {
+    1: {
+      formula: "$$D_c = P \\cdot i \\quad \\text{e} \\quad PL = P - D_c$$",
+      labelF1: "1ª Fórmula: Desconto Comercial (Dc)",
+      labelF2: "2ª Fórmula: Preço Líquido (PL)",
+      itens: [
+        { id: "e1_1", situacao: "Produto de R$ 1.000,00, taxa de 10,00%", valorBase: 1000, descGab: 100.00, plGab: 900.00 },
+        { id: "e1_2", situacao: "Produto de R$ 2.500,00, taxa de 8,00%", valorBase: 2500, descGab: 200.00, plGab: 2300.00 },
+        { id: "e1_3", situacao: "Produto de R$ 3.200,00, taxa de 15,00%", valorBase: 3200, descGab: 480.00, plGab: 2720.00 },
+        { id: "e1_4", situacao: "Produto de R$ 4.000,00, taxa de 5,00%", valorBase: 4000, descGab: 200.00, plGab: 3800.00 },
+        { id: "e1_5", situacao: "Produto de R$ 1.800,00, taxa de 12,00%", valorBase: 1800, descGab: 216.00, plGab: 1584.00 },
+        { id: "e1_6", situacao: "Produto de R$ 950,00, taxa de 10,00%", valorBase: 950, descGab: 95.00, plGab: 855.00 },
+        { id: "e1_7", situacao: "Produto de R$ 5.600,00, taxa de 7,00%", valorBase: 5600, descGab: 392.00, plGab: 5208.00 },
+        { id: "e1_8", situacao: "Produto de R$ 7.200,00, taxa de 6,00%", valorBase: 7200, descGab: 432.00, plGab: 6768.00 },
+        { id: "e1_9", situacao: "Produto de R$ 2.750,00, taxa de 20,00%", valorBase: 2750, descGab: 550.00, plGab: 2200.00 },
+        { id: "e1_10", situacao: "Produto de R$ 8.400,00, taxa de 10,00%", valorBase: 8400, descGab: 840.00, plGab: 7560.00 },
+        { id: "e1_11", situacao: "Produto de R$ 10.000,00, taxa de 15,00%", valorBase: 10000, descGab: 1500.00, plGab: 8500.00 },
+        { id: "e1_12", situacao: "Produto de R$ 12.500,00, taxa de 8,00%", valorBase: 12500, descGab: 1000.00, plGab: 11500.00 },
+        { id: "e1_13", situacao: "Produto de R$ 15.000,00, taxa de 10,00%", valorBase: 15000, descGab: 1500.00, plGab: 13500.00 },
+        { id: "e1_14", situacao: "Produto de R$ 6.400,00, taxa de 25,00%", valorBase: 6400, descGab: 1600.00, plGab: 4800.00 },
+        { id: "e1_15", situacao: "Produto de R$ 3.750,00, taxa de 12,00%", valorBase: 3750, descGab: 450.00, plGab: 3300.00 },
+        { id: "e1_16", situacao: "Produto de R$ 2.200,00, taxa de 5,00%", valorBase: 2200, descGab: 110.00, plGab: 2090.00 },
+        { id: "e1_17", situacao: "Produto de R$ 9.600,00, taxa de 10,00%", valorBase: 9600, descGab: 960.00, plGab: 8640.00 },
+        { id: "e1_18", situacao: "Produto de R$ 11.800,00, taxa de 15,00%", valorBase: 11800, descGab: 1770.00, plGab: 10030.00 },
+        { id: "e1_19", situacao: "Produto de R$ 13.000,00, taxa de 20,00%", valorBase: 13000, descGab: 2600.00, plGab: 10400.00 },
+        { id: "e1_20", situacao: "Produto de R$ 14.500,00, taxa de 10,00%", valorBase: 14500, descGab: 1450.00, plGab: 13050.00 }
+      ]
+    },
+    2: {
+      formula: "$$PL = \\frac{P}{1+i} \\quad \\text{e} \\quad D_r = P - PL$$",
+      labelF1: "1ª Fórmula: Preço Líquido (PL)",
+      labelF2: "2ª Fórmula: Desconto Racional (Dr)",
+      itens: [
+        { id: "e2_1", situacao: "Produto de R$ 1.000,00, taxa de 10,00%", valorBase: 1000, descGab: 90.91, plGab: 909.09 },
+        { id: "e2_2", situacao: "Produto de R$ 2.500,00, taxa de 8,00%", valorBase: 2500, descGab: 185.19, plGab: 2314.81 },
+        { id: "e2_3", situacao: "Produto de R$ 3.200,00, taxa de 15,00%", valorBase: 3200, descGab: 417.39, plGab: 2782.61 },
+        { id: "e2_4", situacao: "Produto de R$ 4.000,00, taxa de 5,00%", valorBase: 4000, descGab: 190.48, plGab: 3809.52 },
+        { id: "e2_5", situacao: "Produto de R$ 1.800,00, taxa de 12,00%", valorBase: 1800, descGab: 192.86, plGab: 1607.14 },
+        { id: "e2_6", situacao: "Produto de R$ 950,00, taxa de 10,00%", valorBase: 950, descGab: 86.36, plGab: 863.64 },
+        { id: "e2_7", situacao: "Produto de R$ 5.600,00, taxa de 7,00%", valorBase: 5600, descGab: 366.36, plGab: 5233.64 },
+        { id: "e2_8", situacao: "Produto de R$ 7.200,00, taxa de 6,00%", valorBase: 7200, descGab: 407.55, plGab: 6792.45 },
+        { id: "e2_9", situacao: "Produto de R$ 2.750,00, taxa de 20,00%", valorBase: 2750, descGab: 458.33, plGab: 2291.67 },
+        { id: "e2_10", situacao: "Produto de R$ 8.400,00, taxa de 10,00%", valorBase: 8400, descGab: 763.64, plGab: 7636.36 },
+        { id: "e2_11", situacao: "Produto de R$ 10.000,00, taxa de 15,00%", valorBase: 10000, descGab: 1304.35, plGab: 8695.65 },
+        { id: "e2_12", situacao: "Produto de R$ 12.500,00, taxa de 8,00%", valorBase: 12500, descGab: 925.93, plGab: 11574.07 },
+        { id: "e2_13", situacao: "Produto de R$ 15.000,00, taxa de 10,00%", valorBase: 15000, descGab: 1363.64, plGab: 13636.36 },
+        { id: "e2_14", situacao: "Produto de R$ 6.400,00, taxa de 25,00%", valorBase: 6400, descGab: 1280.00, plGab: 5120.00 },
+        { id: "e2_15", situacao: "Produto de R$ 3.750,00, taxa de 12,00%", valorBase: 3750, descGab: 401.79, plGab: 3348.21 },
+        { id: "e2_16", situacao: "Produto de R$ 2.200,00, taxa de 5,00%", valorBase: 2200, descGab: 104.76, plGab: 2095.24 },
+        { id: "e2_17", situacao: "Produto de R$ 9.600,00, taxa de 10,00%", valorBase: 9600, descGab: 872.73, plGab: 8727.27 },
+        { id: "e2_18", situacao: "Produto de R$ 11.800,00, taxa de 15,00%", valorBase: 11800, descGab: 1539.13, plGab: 10260.87 },
+        { id: "e2_19", situacao: "Produto de R$ 13.000,00, taxa de 20,00%", valorBase: 13000, descGab: 2166.67, plGab: 10833.33 },
+        { id: "e2_20", situacao: "Produto de R$ 14.500,00, taxa de 10,00%", valorBase: 14500, descGab: 1318.18, plGab: 13181.82 }
+      ]
+    },
+    3: {
+      formula: "$$D_c = N \\cdot i \\cdot t \\quad \\text{e} \\quad PL = N - D_c$$",
+      labelF1: "1ª Fórmula: Desconto Comercial (Dc)",
+      labelF2: "2ª Fórmula: Preço Líquido (PL)",
+      itens: [
+        { id: "e3_1", situacao: "Título de R$ 10.000,00, taxa 2,00% a.m., 3 meses", valorBase: 10000, descGab: 600.00, plGab: 9400.00 },
+        { id: "e3_2", situacao: "Título de R$ 5.000,00, taxa 1,50% a.m., 4 meses", valorBase: 5000, descGab: 300.00, plGab: 4700.00 },
+        { id: "e3_3", situacao: "Título de R$ 8.200,00, taxa 2,50% a.m., 2 meses", valorBase: 8200, descGab: 410.00, plGab: 7790.00 },
+        { id: "e3_4", situacao: "Título de R$ 12.000,00, taxa 1,80% a.m., 5 meses", valorBase: 12000, descGab: 1080.00, plGab: 10920.00 },
+        { id: "e3_5", situacao: "Título de R$ 15.000,00, taxa 3,00% a.m., 6 meses", valorBase: 15000, descGab: 2700.00, plGab: 12300.00 },
+        { id: "e3_6", situacao: "Título de R$ 9.500,00, taxa 2,00% a.m., 3 meses", valorBase: 9500, descGab: 570.00, plGab: 8930.00 },
+        { id: "e3_7", situacao: "Título de R$ 6.400,00, taxa 1,20% a.m., 4 meses", valorBase: 6400, descGab: 307.20, plGab: 6092.80 },
+        { id: "e3_8", situacao: "Título de R$ 11.300,00, taxa 2,20% a.m., 2 meses", valorBase: 11300, descGab: 497.20, plGab: 10802.80 },
+        { id: "e3_9", situacao: "Título de R$ 13.700,00, taxa 1,50% a.m., 6 meses", valorBase: 13700, descGab: 1233.00, plGab: 12467.00 },
+        { id: "e3_10", situacao: "Título de R$ 20.000,00, taxa 2,50% a.m., 4 meses", valorBase: 20000, descGab: 2000.00, plGab: 18000.00 },
+        { id: "e3_11", situacao: "Título de R$ 4.800,00, taxa 2,00% a.m., 3 meses", valorBase: 4800, descGab: 288.00, plGab: 4512.00 },
+        { id: "e3_12", situacao: "Título de R$ 7.600,00, taxa 1,80% a.m., 5 meses", valorBase: 7600, descGab: 684.00, plGab: 6916.00 },
+        { id: "e3_13", situacao: "Título de R$ 14.200,00, taxa 2,50% a.m., 2 meses", valorBase: 14200, descGab: 710.00, plGab: 13490.00 },
+        { id: "e3_14", situacao: "Título de R$ 18.500,00, taxa 2,00% a.m., 4 meses", valorBase: 18500, descGab: 1480.00, plGab: 17020.00 },
+        { id: "e3_15", situacao: "Título de R$ 16.800,00, taxa 1,50% a.m., 6 meses", valorBase: 16800, descGab: 1512.00, plGab: 15288.00 },
+        { id: "e3_16", situacao: "Título de R$ 22.000,00, taxa 3,00% a.m., 3 meses", valorBase: 22000, descGab: 1980.00, plGab: 20020.00 },
+        { id: "e3_17", situacao: "Título de R$ 25.000,00, taxa 2,00% a.m., 5 meses", valorBase: 25000, descGab: 2500.00, plGab: 22500.00 },
+        { id: "e3_18", situacao: "Título de R$ 30.000,00, taxa 2,50% a.m., 2 meses", valorBase: 30000, descGab: 1500.00, plGab: 28500.00 },
+        { id: "e3_19", situacao: "Título de R$ 28.500,00, taxa 1,80% a.m., 4 meses", valorBase: 28500, descGab: 2052.00, plGab: 26448.00 },
+        { id: "e3_20", situacao: "Título de R$ 35.000,00, taxa 2,00% a.m., 3 meses", valorBase: 35000, descGab: 2100.00, plGab: 32900.00 }
+      ]
+    },
+    4: {
+      formula: "$$D_r = \\frac{N \\cdot i \\cdot t}{1 + i \\cdot t} \\quad \\text{e} \\quad PL = N - D_r$$",
+      labelF1: "1ª Fórmula: Desconto Racional (Dr)",
+      labelF2: "2ª Fórmula: Preço Líquido (PL)",
+      itens: [
+        { id: "e4_1", situacao: "Título de R$ 10.000,00, taxa 2,00% a.m., 3 meses", valorBase: 10000, descGab: 566.04, plGab: 9433.96 },
+        { id: "e4_2", situacao: "Título de R$ 5.000,00, taxa 1,50% a.m., 4 meses", valorBase: 5000, descGab: 283.02, plGab: 4716.98 },
+        { id: "e4_3", situacao: "Título de R$ 8.200,00, taxa 2,50% a.m., 2 meses", valorBase: 8200, descGab: 390.48, plGab: 7809.52 },
+        { id: "e4_4", situacao: "Título de R$ 12.000,00, taxa 1,80% a.m., 5 meses", valorBase: 12000, descGab: 990.83, plGab: 11009.17 },
+        { id: "e4_5", situacao: "Título de R$ 15.000,00, taxa 3,00% a.m., 6 meses", valorBase: 15000, descGab: 2288.14, plGab: 12711.86 },
+        { id: "e4_6", situacao: "Título de R$ 9.500,00, taxa 2,00% a.m., 3 meses", valorBase: 9500, descGab: 537.74, plGab: 8962.26 },
+        { id: "e4_7", situacao: "Título de R$ 6.400,00, taxa 1,20% a.m., 4 meses", valorBase: 6400, descGab: 293.13, plGab: 6106.87 },
+        { id: "e4_8", situacao: "Título de R$ 11.300,00, taxa 2,20% a.m., 2 meses", valorBase: 11300, descGab: 476.25, plGab: 10823.75 },
+        { id: "e4_9", situacao: "Título de R$ 13.700,00, taxa 1,50% a.m., 6 meses", valorBase: 13700, descGab: 1131.19, plGab: 12568.81 },
+        { id: "e4_10", situacao: "Título de R$ 20.000,00, taxa 2,50% a.m., 4 meses", valorBase: 20000, descGab: 1818.18, plGab: 18181.82 },
+        { id: "e4_11", situacao: "Título de R$ 4.800,00, taxa 2,00% a.m., 3 meses", valorBase: 4800, descGab: 271.70, plGab: 4528.30 },
+        { id: "e4_12", situacao: "Título de R$ 7.600,00, taxa 1,80% a.m., 5 meses", valorBase: 7600, descGab: 627.52, plGab: 6972.48 },
+        { id: "e4_13", situacao: "Título de R$ 14.200,00, taxa 2,50% a.m., 2 meses", valorBase: 14200, descGab: 676.19, plGab: 13523.81 },
+        { id: "e4_14", situacao: "Título de R$ 18.500,00, taxa 2,00% a.m., 4 meses", valorBase: 18500, descGab: 1370.37, plGab: 17129.63 },
+        { id: "e4_15", situacao: "Título de R$ 16.800,00, taxa 1,50% a.m., 6 meses", valorBase: 16800, descGab: 1387.16, plGab: 15412.84 },
+        { id: "e4_16", situacao: "Título de R$ 22.000,00, taxa 3,00% a.m., 3 meses", valorBase: 22000, descGab: 1816.51, plGab: 20183.49 },
+        { id: "e4_17", situacao: "Título de R$ 25.000,00, taxa 2,00% a.m., 5 meses", valorBase: 25000, descGab: 2272.73, plGab: 22727.27 },
+        { id: "e4_18", situacao: "Título de R$ 30.000,00, taxa 2,50% a.m., 2 meses", valorBase: 30000, descGab: 1428.57, plGab: 28571.43 },
+        { id: "e4_19", situacao: "Título de R$ 28.500,00, taxa 1,80% a.m., 4 meses", valorBase: 28500, descGab: 1914.18, plGab: 26585.82 },
+        { id: "e4_20", situacao: "Título de R$ 35.000,00, taxa 2,00% a.m., 3 meses", valorBase: 35000, descGab: 1981.13, plGab: 33018.87 }
+      ]
+    }
+  };
+
+  let abaAtual = 1;
+  let respostasAluno = JSON.parse(localStorage.getItem('respostas_desconto_v2') || '{}');
+
+  function avaliarExpressao(expressaoStr) {
+    if (!expressaoStr) return NaN;
+    let limpo = expressaoStr.toString().trim().replace(/,/g, '.').replace(/R\$/gi, '').trim();
+    if (/^[0-9\.\+\-\*\/\(\)\s]+$/.test(limpo)) {
+      try {
+        let fn = new Function(`"use strict"; return (${limpo});`);
+        let res = fn();
+        return (typeof res === 'number' && !isNaN(res) && isFinite(res)) ? res : NaN;
+      } catch (e) {
+        return NaN;
+      }
+    }
+    return parseFloat(limpo);
+  }
+
+  function renderizarAba() {
+    const dadosAba = BANCO_EXERCICIOS[abaAtual];
+    document.getElementById('formula-display').innerHTML = dadosAba.formula;
+    document.getElementById('th-f1').innerText = dadosAba.labelF1;
+    document.getElementById('th-f2').innerText = dadosAba.labelF2;
+
+    if (window.renderMathInElement) {
+      renderMathInElement(document.getElementById('formula-display'));
+    }
+
+    const tbody = document.getElementById('exercicios-tbody');
+    tbody.innerHTML = '';
+
+    const isFinalizado = !!respostasAluno.finalizado;
+
+    dadosAba.itens.forEach((ex, idx) => {
+      const expF1 = respostasAluno[`${ex.id}_f1_exp`] || '';
+      const valF1 = respostasAluno[`${ex.id}_f1_val`] || '';
+      const expF2 = respostasAluno[`${ex.id}_f2_exp`] || '';
+      const valF2 = respostasAluno[`${ex.id}_f2_val`] || '';
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>Item ${idx + 1 < 10 ? '0' + (idx + 1) : (idx + 1)}</strong></td>
+        <td>${ex.situacao}</td>
+        <td>
+          <div class="cell-container">
+            <input type="text" class="cell-input" id="input-${ex.id}-f1" 
+                   data-ex="${ex.id}" data-type="f1"
+                   placeholder="Ex: 1000 * 0,10" value="${expF1}" ${isFinalizado ? 'disabled' : ''} />
+            <div class="result-box ${valF1 ? 'visible' : ''}" id="resbox-${ex.id}-f1">
+              Resultado: R$ ${valF1}
+            </div>
+          </div>
+        </td>
+        <td>
+          <div class="cell-container">
+            <input type="text" class="cell-input" id="input-${ex.id}-f2" 
+                   data-ex="${ex.id}" data-type="f2"
+                   placeholder="Ex: 1000 - ${valF1 || '100'}" value="${expF2}" ${isFinalizado ? 'disabled' : ''} />
+            <div class="result-box ${valF2 ? 'visible' : ''}" id="resbox-${ex.id}-f2">
+              Resultado: R$ ${valF2}
+            </div>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.querySelectorAll('.cell-input').forEach(input => {
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          processarEntradaCalculo(this);
+        }
+      });
+      input.addEventListener('blur', function() {
+        processarEntradaCalculo(this);
+      });
+    });
+
+    atualizarProgressoGeral();
+  }
+
+  function processarEntradaCalculo(inputEl) {
+    if (respostasAluno.finalizado) return;
+
+    const exId = inputEl.getAttribute('data-ex');
+    const fieldType = inputEl.getAttribute('data-type');
+    const rawValue = inputEl.value;
+
+    const resBox = document.getElementById(`resbox-${exId}-${fieldType}`);
+
+    if (!rawValue.trim()) {
+      resBox.classList.remove('visible');
+      resBox.innerText = '';
+      delete respostasAluno[`${exId}_${fieldType}_exp`];
+      delete respostasAluno[`${exId}_${fieldType}_val`];
+      localStorage.setItem('respostas_desconto_v2', JSON.stringify(respostasAluno));
+      atualizarProgressoGeral();
+      return;
+    }
+
+    let numResultado = avaliarExpressao(rawValue);
+
+    if (!isNaN(numResultado)) {
+      let strVal = numResultado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      
+      resBox.innerText = `Resultado: R$ ${strVal}`;
+      resBox.classList.add('visible');
+
+      respostasAluno[`${exId}_${fieldType}_exp`] = rawValue;
+      respostasAluno[`${exId}_${fieldType}_val`] = strVal;
+
+      localStorage.setItem('respostas_desconto_v2', JSON.stringify(respostasAluno));
+      atualizarProgressoGeral();
+    } else {
+      resBox.classList.remove('visible');
+    }
+  }
+
+  function atualizarProgressoGeral() {
+    let totalCampos = 80 * 2;
+    let preenchidos = 0;
+
+    for (let tab in BANCO_EXERCICIOS) {
+      BANCO_EXERCICIOS[tab].itens.forEach(ex => {
+        if (respostasAluno[`${ex.id}_f1_val`]) preenchidos++;
+        if (respostasAluno[`${ex.id}_f2_val`]) preenchidos++;
+      });
+    }
+
+    let percent = Math.round((preenchidos / totalCampos) * 100);
+    document.getElementById('progress-fill').style.width = percent + '%';
+    document.getElementById('progress-percent').innerText = `${preenchidos} / ${totalCampos} campos preenchidos (${percent}%)`;
+  }
+
+  function mudarAba(numeroAba) {
+    abaAtual = numeroAba;
+    document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+      btn.classList.toggle('active', (idx + 1) === numeroAba);
+    });
+    renderizarAba();
+  }
+
+  function calcularDesempenho() {
+    let acertos = 0;
+    let totalCampos = 80 * 2;
+
+    for (let tab in BANCO_EXERCICIOS) {
+      BANCO_EXERCICIOS[tab].itens.forEach(ex => {
+        let v1 = avaliarExpressao(respostasAluno[`${ex.id}_f1_val`]);
+        let v2 = avaliarExpressao(respostasAluno[`${ex.id}_f2_val`]);
+
+        let gabF1 = (tab == 2) ? ex.plGab : ex.descGab;
+        let gabF2 = (tab == 2) ? ex.descGab : ex.plGab;
+
+        if (!isNaN(v1) && Math.abs(v1 - gabF1) <= 0.05) acertos++;
+        if (!isNaN(v2) && Math.abs(v2 - gabF2) <= 0.05) acertos++;
+      });
+    }
+
+    let percentual = Math.round((acertos / totalCampos) * 100);
+    return { acertos, total: totalCampos, percentual };
+  }
+
+  function enviarRespostas() {
+    const nome = document.getElementById('aluno-nome').value.trim();
+    const turma = document.getElementById('aluno-turma').value.trim();
+
+    if (!nome) {
+      alert('Por favor, preencha seu nome completo antes de enviar!');
+      document.getElementById('aluno-nome').focus();
+      return;
+    }
+
+    if (!confirm('Tem certeza que deseja enviar? Após o envio, você NÃO poderá mais alterar nenhuma resposta.')) {
+      return;
+    }
+
+    const btnEnviar = document.getElementById('btn-enviar');
+    btnEnviar.disabled = true;
+    btnEnviar.innerText = 'Enviando para a planilha...';
+
+    const avaliacao = calcularDesempenho();
+
+    const payload = {
+      nome: nome,
+      turma: turma,
+      acertos: avaliacao.acertos,
+      total: avaliacao.total,
+      percentual: avaliacao.percentual,
+      respostas: respostasAluno
+    };
+
+    fetch(WEB_APP_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+    .then(() => {
+      respostasAluno.nome = nome;
+      respostasAluno.turma = turma;
+      respostasAluno.finalizado = true;
+
+      localStorage.setItem('respostas_desconto_v2', JSON.stringify(respostasAluno));
+
+      aplicarBloqueio();
+
+      document.getElementById('modal-msg').innerHTML = `
+        <strong>Aluno:</strong> ${nome}<br/>
+        <strong>Turma:</strong> ${turma || 'Não informada'}<br/><br/>
+        Suas respostas foram gravadas na planilha com sucesso!
+      `;
+      document.getElementById('modal-sucesso').classList.add('active');
+    })
+    .catch(err => {
+      alert('Erro ao enviar para a planilha. Verifique a conexão com a internet.');
+      btnEnviar.disabled = false;
+      btnEnviar.innerText = 'Enviar Respostas';
+    });
+  }
+
+  function aplicarBloqueio() {
+    if (respostasAluno.finalizado) {
+      document.getElementById('locked-banner').style.display = 'block';
+      const btnEnviar = document.getElementById('btn-enviar');
+      btnEnviar.disabled = true;
+      btnEnviar.innerText = 'Exercício Finalizado e Enviado';
+      document.getElementById('aluno-nome').disabled = true;
+      document.getElementById('aluno-turma').disabled = true;
+
+      document.querySelectorAll('.cell-input').forEach(input => {
+        input.disabled = true;
+      });
+    }
+  }
+
+  function fecharModal() {
+    document.getElementById('modal-sucesso').classList.remove('active');
+    window.print();
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    if (respostasAluno.nome) document.getElementById('aluno-nome').value = respostasAluno.nome;
+    if (respostasAluno.turma) document.getElementById('aluno-turma').value = respostasAluno.turma;
+
+    renderizarAba();
+    aplicarBloqueio();
+
+    document.getElementById('aluno-nome').addEventListener('input', (e) => {
+      respostasAluno.nome = e.target.value;
+      localStorage.setItem('respostas_desconto_v2', JSON.stringify(respostasAluno));
+    });
+    document.getElementById('aluno-turma').addEventListener('input', (e) => {
+      respostasAluno.turma = e.target.value;
+      localStorage.setItem('respostas_desconto_v2', JSON.stringify(respostasAluno));
+    });
+  });
+</script>
+
+</body>
+</html>

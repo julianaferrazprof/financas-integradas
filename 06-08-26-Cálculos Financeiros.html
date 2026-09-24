@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Avaliação Interativa de Cálculos Financeiros - Área do Aluno</title>
+ <!-- Tailwind CSS -->
+ <script src="https://cdn.tailwindcss.com"></script>
+ <!-- Chart.js -->
+ <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+ <!-- Lucide Icons -->
+ <script src="https://unpkg.com/lucide@latest"></script>
+ <style>
+ .active-tab {
+ border-bottom: 3px solid #2563eb;
+ color: #2563eb;
+ font-weight: 600;
+ }
+ </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+ <!-- Header & Identificação do Aluno -->
+ <header class="bg-slate-900 text-white shadow-md">
+ <div class="max-w-7xl mx-auto px-4 py-4 space-y-4">
+ <div class="flex flex-wrap justify-between items-center gap-4">
+ <div class="flex items-center space-x-3">
+ <i data-lucide="calculator" class="w-8 h-8 text-blue-400"></i>
+ <div>
+ <h1 class="text-xl font-bold">Laboratório de Cálculos Financeiros</h1>
+ <p class="text-xs text-slate-400">Plataforma Prática de Aprendizado & Avaliação (Área do Aluno)</p>
+ </div>
+ </div>
+ <div>
+ <button id="btn-submit" onclick="exportSingleReportHTML()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+ <i data-lucide="file-check" class="w-5 h-5"></i>
+ <span id="btn-submit-text">Finalizar e Exportar Avaliação (.html)</span>
+ </button>
+ </div>
+ </div>
+
+ <!-- Banner de Aviso caso já tenha sido enviado -->
+ <div id="submitted-banner" class="hidden bg-emerald-900/80 border border-emerald-500 text-emerald-200 px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2">
+ <i data-lucide="lock" class="w-4 h-4 text-emerald-400"></i>
+ <span>Esta avaliação já foi finalizada e enviada ao professor. As respostas estão bloqueadas para edição.</span>
+ </div>
+
+ <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+ <div>
+ <label class="block text-xs font-semibold text-slate-300 mb-1">Nome Completo do Aluno:</label>
+ <input type="text" id="student-name" placeholder="Digite seu nome completo..." class="w-full bg-slate-900 text-white px-3 py-1.5 rounded border border-slate-600 focus:outline-none focus:border-blue-500 disabled:bg-slate-800 disabled:text-slate-400">
+ </div>
+ <div>
+ <label class="block text-xs font-semibold text-slate-300 mb-1">Turma / Período:</label>
+ <input type="text" id="student-class" placeholder="Ex: 2º Ano A - Matutino" class="w-full bg-slate-900 text-white px-3 py-1.5 rounded border border-slate-600 focus:outline-none focus:border-blue-500 disabled:bg-slate-800 disabled:text-slate-400">
+ </div>
+ </div>
+ </div>
+ </header>
+
+ <!-- Navigation Tabs -->
+ <nav class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-10">
+ <div class="max-w-7xl mx-auto px-4 flex overflow-x-auto space-x-6 text-sm font-medium text-slate-600 no-scrollbar">
+ <button onclick="switchTab('dashboard')" id="tab-dashboard" class="py-3 px-1 active-tab flex items-center gap-2 whitespace-nowrap">
+ <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard Geral
+ </button>
+ <button onclick="switchTab('ex1')" id="tab-ex1" class="py-3 px-1 flex items-center gap-2 whitespace-nowrap">
+ <i data-lucide="percent" class="w-4 h-4"></i> 1. Porcentagem Simples
+ </button>
+ <button onclick="switchTab('ex2')" id="tab-ex2" class="py-3 px-1 flex items-center gap-2 whitespace-nowrap">
+ <i data-lucide="trending-up" class="w-4 h-4"></i> 2. Aumentos / Reajustes
+ </button>
+ <button onclick="switchTab('ex3')" id="tab-ex3" class="py-3 px-1 flex items-center gap-2 whitespace-nowrap">
+ <i data-lucide="pie-chart" class="w-4 h-4"></i> 3. Participação / Proporção
+ </button>
+ <button onclick="switchTab('ex4')" id="tab-ex4" class="py-3 px-1 flex items-center gap-2 whitespace-nowrap">
+ <i data-lucide="activity" class="w-4 h-4"></i> 4. Variação Percentual
+ </button>
+ <button onclick="switchTab('ex5')" id="tab-ex5" class="py-3 px-1 flex items-center gap-2 whitespace-nowrap">
+ <i data-lucide="coins" class="w-4 h-4"></i> 5. Juros Simples
+ </button>
+ <button onclick="switchTab('ex6')" id="tab-ex6" class="py-3 px-1 flex items-center gap-2 whitespace-nowrap">
+ <i data-lucide="line-chart" class="w-4 h-4"></i> 6. Juros Compostos
+ </button>
+ </div>
+ </nav>
+
+ <!-- Main Content -->
+ <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
+
+ <!-- DASHBOARD VIEW -->
+ <div id="view-dashboard" class="space-y-6">
+ <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+ <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+ <div>
+ <p class="text-xs text-slate-500 font-semibold uppercase">Total de Exercícios</p>
+ <p id="kpi-total-ex" class="text-2xl font-bold text-slate-800 mt-1">120</p>
+ </div>
+ <div class="p-3 bg-blue-50 text-blue-600 rounded-lg"><i data-lucide="book-open"></i></div>
+ </div>
+ <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+ <div>
+ <p class="text-xs text-slate-500 font-semibold uppercase">Questões Respondidas</p>
+ <p id="kpi-answered-ex" class="text-2xl font-bold text-emerald-600 mt-1">0 / 120</p>
+ </div>
+ <div class="p-3 bg-emerald-50 text-emerald-600 rounded-lg"><i data-lucide="check-circle-2"></i></div>
+ </div>
+ <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+ <div>
+ <p class="text-xs text-slate-500 font-semibold uppercase">Progresso Geral</p>
+ <p id="kpi-progress-percent" class="text-2xl font-bold text-indigo-600 mt-1">0%</p>
+ </div>
+ <div class="p-3 bg-indigo-50 text-indigo-600 rounded-lg"><i data-lucide="pie-chart"></i></div>
+ </div>
+ <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+ <div>
+ <p class="text-xs text-slate-500 font-semibold uppercase">Status da Avaliação</p>
+ <p id="kpi-status-envio" class="text-2xl font-bold text-purple-600 mt-1">Em Andamento</p>
+ </div>
+ <div class="p-3 bg-purple-50 text-purple-600 rounded-lg"><i data-lucide="clock"></i></div>
+ </div>
+ </div>
+
+ <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+ <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+ <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+ <i data-lucide="bar-chart-2" class="w-5 h-5 text-blue-600"></i>
+ Progresso de Preenchimento por Módulo (%)
+ </h3>
+ <div class="h-72">
+ <canvas id="chartJurosComp"></canvas>
+ </div>
+ </div>
+
+ <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+ <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+ <i data-lucide="doughnut" class="w-5 h-5 text-emerald-600"></i>
+ Status Geral (Respondidas vs. Pendentes)
+ </h3>
+ <div class="h-72 flex justify-center items-center">
+ <canvas id="chartVariacao"></canvas>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- TEMPLATE VIEW DOS MÓDULOS -->
+ <div id="view-module" class="hidden space-y-4">
+ <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+ <h2 id="module-title" class="text-xl font-bold text-slate-900"></h2>
+ <p id="module-desc" class="text-sm text-slate-500 mt-1"></p>
+ </div>
+
+ <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl text-sm text-blue-900 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+ <div class="space-y-1">
+ <span class="font-bold text-blue-800 flex items-center gap-1">
+ <i data-lucide="function-square" class="w-4 h-4"></i> Guia de Fórmula & Resolução:
+ </span>
+ <p id="formula-text" class="text-slate-700 font-mono font-semibold bg-white px-3 py-1.5 rounded border border-blue-200 inline-block"></p>
+ <p id="formula-explain" class="text-xs text-blue-700 mt-1"></p>
+ </div>
+ <div class="bg-white/80 p-2.5 rounded-lg border border-blue-200 text-xs text-slate-600 min-w-[240px]">
+ <strong class="text-blue-900 block mb-1">Instruções de Preenchimento:</strong>
+ 1. Extraia os dados do enunciado para as colunas amarelas.<br>
+ 2. Digite a expressão na última caixa. Ex: <code id="formula-example" class="bg-slate-100 text-blue-700 font-bold px-1 py-0.5 rounded"></code>
+ </div>
+ </div>
+
+ <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden overflow-x-auto">
+ <table class="w-full text-left border-collapse">
+ <thead id="table-head" class="bg-slate-100 text-slate-700 text-xs font-semibold uppercase tracking-wider border-b border-slate-200">
+ </thead>
+ <tbody id="table-body" class="divide-y divide-slate-200 text-sm">
+ </tbody>
+ </table>
+ </div>
+ </div>
+
+ </main>
+
+ <script>
+ // URL do Google Apps Script conectada à sua planilha
+ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQGaCLFoQbNt_xGJqnrn0JFiMoMSRq3c-o4IJT8HKcNFNitiBWZVqSjpG6NrBkDtb1/exec";
+
+ const defaultData = {
+ ex1: [
+ { id: 1, desc: "Calcule 25% de R$ 480,00.", taxa: "", valor: "", userAns: "" },
+ { id: 2, desc: "Calcule 12% de R$ 750,00.", taxa: "", valor: "", userAns: "" },
+ { id: 3, desc: "Calcule 40% de R$ 1.200,00.", taxa: "", valor: "", userAns: "" },
+ { id: 4, desc: "Calcule 8% de R$ 6.000,00.", taxa: "", valor: "", userAns: "" },
+ { id: 5, desc: "Calcule 15% de R$ 2.000,00.", taxa: "", valor: "", userAns: "" },
+ { id: 6, desc: "Calcule 5% de R$ 9.000,00.", taxa: "", valor: "", userAns: "" },
+ { id: 7, desc: "Calcule 30% de R$ 3.500,00.", taxa: "", valor: "", userAns: "" },
+ { id: 8, desc: "Calcule 18% de R$ 2.200,00.", taxa: "", valor: "", userAns: "" },
+ { id: 9, desc: "Calcule 22% de R$ 4.500,00.", taxa: "", valor: "", userAns: "" },
+ { id: 10, desc: "Calcule 10% de R$ 850,00.", taxa: "", valor: "", userAns: "" },
+ { id: 11, desc: "Calcule 12.5% de R$ 800,00.", taxa: "", valor: "", userAns: "" },
+ { id: 12, desc: "Calcule 6% de R$ 1.500,00.", taxa: "", valor: "", userAns: "" },
+ { id: 13, desc: "Calcule 7% de R$ 3.000,00.", taxa: "", valor: "", userAns: "" },
+ { id: 14, desc: "Calcule 2% de R$ 12.000,00.", taxa: "", valor: "", userAns: "" },
+ { id: 15, desc: "Calcule 9% de R$ 2.700,00.", taxa: "", valor: "", userAns: "" },
+ { id: 16, desc: "Calcule 16% de R$ 640,00.", taxa: "", valor: "", userAns: "" },
+ { id: 17, desc: "Calcule 11% de R$ 1.250,00.", taxa: "", valor: "", userAns: "" },
+ { id: 18, desc: "Calcule 14% de R$ 4.100,00.", taxa: "", valor: "", userAns: "" },
+ { id: 19, desc: "Calcule 3% de R$ 980,00.", taxa: "", valor: "", userAns: "" },
+ { id: 20, desc: "Calcule 13% de R$ 3.333,00.", taxa: "", valor: "", userAns: "" }
+ ],
+ ex2: [
+ { id: 1, desc: "Valor R$ 1.200,00 sofreu aumento de 10%. Qual o valor atual?", taxa: "", valor: "", userAns: "" },
+ { id: 2, desc: "Valor R$ 600,00 sofreu aumento de 12%. Qual o valor atual?", taxa: "", valor: "", userAns: "" },
+ { id: 3, desc: "Valor R$ 850,00 sofreu aumento de 15%. Qual o valor atual?", taxa: "", valor: "", userAns: "" },
+ { id: 4, desc: "Valor R$ 2.000,00 sofreu aumento de 8%. Qual o valor atual?", taxa: "", valor: "", userAns: "" },
+ { id: 5, desc: "Valor R$ 400,00 sofreu aumento de 25%. Qual o valor atual?", taxa: "", valor: "", userAns: "" },
+ { id: 6, desc: "Valor R$ 900,00 sofreu aumento de 5%. Qual o valor atual?", taxa: "", valor: "", userAns: "" },
+ { id: 7, desc: "Valor R$ 350,00 sofreu aumento de 30%. Qual o valor atual?", taxa: "", valor: "", userAns: "" },
+ { id: 8, desc: "Valor R$ 120,00 sofreu aumento de 20%. Qual o valor atual?", taxa: "", valor: "", userAns: "" },
+ { id: 9, desc: "Valor R$ 750,00 sofreu aumento de 18%. Qual o valor atual?", taxa: "", valor: "", userAns: "" },
+ { id: 10, desc: "Valor R$ 1.000,00 sofreu aumento de 7%. Qual o valor atual?", taxa: "", valor: "", userAns: "" },
+ { id: 11, desc: "Valor R$ 2.500,00 sofreu aumento de 6%. Qual o valor atual?", taxa: "", valor: "", userAns: "" },
+ { id: 12, desc: "Valor R$ 1.800,00 sofreu aumento de 4%. Qual o valor atual?", taxa: "", valor: "", userAns: "" },
+ { id: 13, desc: "Valor R$ 3.600,00 sofreu aumento de 9%. Qual o valor atual?", taxa: "", valor: "", userAns: "" },
+ { id: 14, desc: "Valor R$ 400,00 sofreu aumento de 15%. Qual o valor atual?", taxa: "", valor: "", userAns: "" },
+ { id: 15, desc: "Valor R$ 220,00 sofreu aumento de 10%. Qual o valor atual?", taxa: "", valor: "", userAns: "" },
+ { id: 16, desc: "Valor R$ 640,00 sofreu aumento de 5%. Qual o valor atual?", taxa: "", valor: "", userAns: "" },
+ { id: 17, desc: "Valor R$ 1.300,00 sofreu aumento de 11%. Qual o valor atual?", taxa: "", valor: "", userAns: "" },
+ { id: 18, desc: "Valor R$ 480,00 sofreu aumento de 2%. Qual o valor atual?", taxa: "", valor: "", userAns: "" },
+ { id: 19, desc: "Valor R$ 1.750,00 sofreu aumento de 13%. Qual o valor atual?", taxa: "", valor: "", userAns: "" },
+ { id: 20, desc: "Valor R$ 980,00 sofreu aumento de 3%. Qual o valor atual?", taxa: "", valor: "", userAns: "" }
+ ],
+ ex3: [
+ { id: 1, desc: "Em uma sala com 30 alunos, 18 compareceram à aula. Qual a porcentagem de presença?", parte: "", total: "", userAns: "" },
+ { id: 2, desc: "Uma empresa possui 500 clientes cadastrados. Destes, 150 compraram este mês. Qual a porcentagem de clientes ativos?", parte: "", total: "", userAns: "" },
+ { id: 3, desc: "Uma fábrica produziu 1000 peças, das quais 400 foram reprovadas no controle de qualidade. Qual a porcentagem de peças com defeito?", parte: "", total: "", userAns: "" },
+ { id: 4, desc: "Uma pesquisa entrevistou 20.000 pessoas. Destas, 15.000 aprovaram o novo produto. Qual a porcentagem de aprovação?", parte: "", total: "", userAns: "" },
+ { id: 5, desc: "Em uma caixa com 45 peças, 9 estão quebradas. Qual a porcentagem de peças danificadas?", parte: "", total: "", userAns: "" },
+ { id: 6, desc: "Em uma escola com 600 alunos, 90 participam do grêmio estudantil. Qual a porcentagem de participação?", parte: "", total: "", userAns: "" },
+ { id: 7, desc: "Um condomínio tem 1200 apartamentos, dos quais 300 possuem garagem dupla. Qual a porcentagem de apartamentos com garagem dupla?", parte: "", total: "", userAns: "" },
+ { id: 8, desc: "De um grupo de 80 funcionários, 20 trabalham no setor de finanças. Qual a porcentagem de funcionários nesse setor?", parte: "", total: "", userAns: "" },
+ { id: 9, desc: "Em uma campanha de vacinação para 12.000 pessoas, 3000 já foram vacinadas. Qual a porcentagem da população vacinada?", parte: "", total: "", userAns: "" },
+ { id: 10, desc: "Uma empresa possui 900 funcionários. Desses, 180 estão em regime de home office. Qual a porcentagem de funcionários em home office?", parte: "", total: "", userAns: "" },
+ { id: 11, desc: "Em uma prova com 50 questões, o aluno acertou 40. Qual a porcentagem de acertos?", parte: "", total: "", userAns: "" },
+ { id: 12, desc: "Em uma escola com 600 alunos, 90 são bolsistas. Qual a porcentagem de bolsistas?", parte: "", total: "", userAns: "" },
+ { id: 13, desc: "Um banco possui 5000 clientes, dos quais 2000 utilizam serviços digitais. Qual a porcentagem de clientes digitais?", parte: "", total: "", userAns: "" },
+ { id: 14, desc: "Em uma turma com 60 alunos, apenas 15 entregaram o trabalho no prazo. Qual a porcentagem?", parte: "", total: "", userAns: "" },
+ { id: 15, desc: "Em uma competição com 30 participantes, 12 são mulheres. Qual a porcentagem de mulheres?", parte: "", total: "", userAns: "" },
+ { id: 16, desc: "Em uma turma com 250 alunos, 125 estudam no período noturno. Qual a porcentagem de alunos do noturno?", parte: "", total: "", userAns: "" },
+ { id: 17, desc: "Uma empresa tem 100 funcionários, dos quais 55 são do setor de produção. Qual a porcentagem do setor de produção?", parte: "", total: "", userAns: "" },
+ { id: 18, desc: "Uma escola possui 720 estudantes, sendo 144 do curso técnico. Qual a porcentagem de alunos no curso técnico?", parte: "", total: "", userAns: "" },
+ { id: 19, desc: "Em um condomínio com 360 apartamentos, 90 têm varanda gourmet. Qual a porcentagem?", parte: "", total: "", userAns: "" },
+ { id: 20, desc: "De um total de 1000 produtos em estoque, 650 já foram vendidos. Qual a porcentagem de vendas realizadas?", parte: "", total: "", userAns: "" }
+ ],
+ ex4: [
+ { id: 1, desc: "O preço de um produto passou de R$ 800,00 para R$ 1.000,00. Qual foi a variação percentual?", va: "", vn: "", userAns: "" },
+ { id: 2, desc: "O salário de um funcionário foi reduzido de R$ 900,00 para R$ 810,00. Qual a variação percentual?", va: "", vn: "", userAns: "" },
+ { id: 3, desc: "O valor de um aluguel subiu de R$ 2.500,00 para R$ 2.750,00. Qual foi o reajuste percentual?", va: "", vn: "", userAns: "" },
+ { id: 4, desc: "A mensalidade de um curso aumentou de R$ 1.200,00 para R$ 1.440,00. Qual foi a variação percentual?", va: "", vn: "", userAns: "" },
+ { id: 5, desc: "O preço de um produto caiu de R$ 300,00 para R$ 270,00. Qual o desconto percentual aplicado?", va: "", vn: "", userAns: "" },
+ { id: 6, desc: "O faturamento de uma empresa passou de R$ 50.000,00 para R$ 55.000,00. Qual foi o crescimento percentual?", va: "", vn: "", userAns: "" },
+ { id: 7, desc: "O valor de uma dívida aumentou de R$ 1.500,00 para R$ 1.650,00. Qual a variação percentual?", va: "", vn: "", userAns: "" },
+ { id: 8, desc: "O preço de um ingresso subiu de R$ 200,00 para R$ 240,00. Qual foi o reajuste percentual?", va: "", vn: "", userAns: "" },
+ { id: 9, desc: "O valor de um aparelho caiu de R$ 400,00 para R$ 360,00. Qual foi a variação percentual?", va: "", vn: "", userAns: "" },
+ { id: 10, desc: "O lucro de uma loja caiu de R$ 2.000,00 para R$ 1.800,00. Qual a variação percentual?", va: "", vn: "", userAns: "" },
+ { id: 11, desc: "A produção de uma fábrica aumentou de 3.000 para 3.600 unidades. Qual foi a variação percentual?", va: "", vn: "", userAns: "" },
+ { id: 12, desc: "O valor de uma moto foi reduzido de R$ 700,00 para R$ 560,00 em uma promoção. Qual o desconto percentual?", va: "", vn: "", userAns: "" },
+ { id: 13, desc: "O preço de um pacote turístico subiu de R$ 1.200,00 para R$ 1.500,00. Qual foi a variação percentual?", va: "", vn: "", userAns: "" },
+ { id: 14, desc: "O salário de um funcionário caiu de R$ 1.800,00 para R$ 1.530,00. Qual foi a variação percentual?", va: "", vn: "", userAns: "" },
+ { id: 15, desc: "O valor de uma mensalidade foi reduzido de R$ 250,00 para R$ 225,00. Qual foi o desconto percentual?", va: "", vn: "", userAns: "" },
+ { id: 16, desc: "O preço de um eletrodoméstico subiu de R$ 1.000,00 para R$ 1.200,00. Qual foi a variação percentual?", va: "", vn: "", userAns: "" },
+ { id: 17, desc: "O valor de um imóvel caiu de R$ 850,00 para R$ 765,00 (em milhares). Qual foi a variação percentual?", va: "", vn: "", userAns: "" },
+ { id: 18, desc: "O valor de uma fatura de cartão caiu de R$ 600,00 para R$ 540,00. Qual foi a redução percentual?", va: "", vn: "", userAns: "" },
+ { id: 19, desc: "O preço de um produto subiu de R$ 450,00 para R$ 495,00. Qual foi o aumento percentual?", va: "", vn: "", userAns: "" },
+ { id: 20, desc: "O preço de um item caiu de R$ 100,00 para R$ 90,00. Qual foi a variação percentual?", va: "", vn: "", userAns: "" }
+ ],
+ ex5: [
+ { id: 1, desc: "Capital R$ 1.000,00, taxa 3% ao mês, tempo 5 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 2, desc: "Capital R$ 800,00, taxa 9% ao mês, tempo 4 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 3, desc: "Capital R$ 2.500,00, taxa 1,8% ao mês, tempo 12 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 4, desc: "Capital R$ 1.200,00, taxa 10% ao mês, tempo 5 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 5, desc: "Capital R$ 3.200,00, taxa 8% ao mês, tempo 2 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 6, desc: "Capital R$ 500,00, taxa 4% ao mês, tempo 6 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 7, desc: "Capital R$ 2.000,00, taxa 5% ao mês, tempo 2 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 8, desc: "Capital R$ 700,00, taxa 6% ao mês, tempo 10 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 9, desc: "Capital R$ 1.500,00, taxa 18% ao mês, tempo 2 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 10, desc: "Capital R$ 900,00, taxa 15% ao mês, tempo 4 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 11, desc: "Capital R$ 4.000,00, taxa 2,5% ao mês, tempo 8 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 12, desc: "Capital R$ 2.200,00, taxa 7% ao mês, tempo 3 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 13, desc: "Capital R$ 600,00, taxa 12% ao mês, tempo 5 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 14, desc: "Capital R$ 750,00, taxa 9% ao mês, tempo 6 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 15, desc: "Capital R$ 1.800,00, taxa 3% ao mês, tempo 10 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 16, desc: "Capital R$ 2.700,00, taxa 11% ao mês, tempo 2 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 17, desc: "Capital R$ 350,00, taxa 8% ao mês, tempo 7 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 18, desc: "Capital R$ 5.000,00, taxa 6% ao mês, tempo 1 mês. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 19, desc: "Capital R$ 420,00, taxa 15% ao mês, tempo 4 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 20, desc: "Capital R$ 1.600,00, taxa 10% ao mês, tempo 9 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" }
+ ],
+ ex6: [
+ { id: 1, desc: "Capital R$ 1.000,00, taxa 2% ao mês, tempo 5 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 2, desc: "Capital R$ 800,00, taxa 9% ao mês, tempo 4 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 3, desc: "Capital R$ 2.500,00, taxa 1,8% ao mês, tempo 12 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 4, desc: "Capital R$ 1.200,00, taxa 10% ao mês, tempo 5 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 5, desc: "Capital R$ 3.200,00, taxa 8% ao mês, tempo 2 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 6, desc: "Capital R$ 500,00, taxa 4% ao mês, tempo 6 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 7, desc: "Capital R$ 2.000,00, taxa 5% ao mês, tempo 2 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 8, desc: "Capital R$ 700,00, taxa 6% ao mês, tempo 10 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 9, desc: "Capital R$ 1.500,00, taxa 18% ao mês, tempo 2 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 10, desc: "Capital R$ 900,00, taxa 15% ao mês, tempo 4 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 11, desc: "Capital R$ 4.000,00, taxa 2,5% ao mês, tempo 8 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 12, desc: "Capital R$ 2.200,00, taxa 7% ao mês, tempo 3 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 13, desc: "Capital R$ 600,00, taxa 12% ao mês, tempo 5 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 14, desc: "Capital R$ 750,00, taxa 9% ao mês, tempo 6 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 15, desc: "Capital R$ 1.800,00, taxa 3% ao mês, tempo 10 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 16, desc: "Capital R$ 2.700,00, taxa 11% ao mês, tempo 2 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 17, desc: "Capital R$ 350,00, taxa 8% ao mês, tempo 7 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 18, desc: "Capital R$ 5.000,00, taxa 6% ao mês, tempo 1 mês. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 19, desc: "Capital R$ 420,00, taxa 15% ao mês, tempo 4 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" },
+ { id: 20, desc: "Capital R$ 1.600,00, taxa 10% ao mês, tempo 9 meses. Qual o montante?", taxa: "", valor: "", tempo: "", userAns: "" }
+ ]
+ };
+
+ const moduleTitles = {
+ ex1: "1. Porcentagem Simples",
+ ex2: "2. Aumentos e Reajustes",
+ ex3: "3. Participação e Proporção",
+ ex4: "4. Variação Percentual",
+ ex5: "5. Juros Simples",
+ ex6: "6. Juros Compostos"
+ };
+
+ const moduleFormulas = {
+ ex1: { formula: "Resultado = Valor × (Taxa / 100)", explain: "Onde 'Valor' é a quantia base e 'Taxa' é a porcentagem.", example: "500 * (20/100) ou 500 * 0.20" },
+ ex2: { formula: "Novo Valor = Valor × (1 + Taxa / 100)", explain: "O fator (1 + Taxa/100) aplica o acréscimo percentual.", example: "1500 * (1 + 0.10) ou 1500 * 1.10" },
+ ex3: { formula: "Porcentagem (%) = (Parte / Total) × 100", explain: "Divide-se a parte parcial pelo total e multiplica-se por 100.", example: "(12 / 40) * 100" },
+ ex4: { formula: "Variação (%) = ((Valor Novo - Valor Antigo) / Valor Antigo) × 100", explain: "Mede crescimento (positivo) ou queda (negativo).", example: "((1200 - 1000) / 1000) * 100" },
+ ex5: { formula: "Montante (M) = Capital × (1 + (Taxa / 100) × Tempo)", explain: "Fórmula de Juros Simples (M = C + J).", example: "1000 * (1 + 0.02 * 5)" },
+ ex6: { formula: "Montante (M) = Capital × (1 + Taxa / 100) ^ Tempo", explain: "Fórmula de Juros Compostos (juros sobre juros).", example: "1000 * (1 + 0.02)^5" }
+ };
+
+ let appData = JSON.parse(localStorage.getItem("fin_student_data_v1")) || JSON.parse(JSON.stringify(defaultData));
+ let isSubmitted = localStorage.getItem("fin_submitted_v1") === "true";
+ let activeTab = 'dashboard';
+ let chart1Instance = null, chart2Instance = null;
+
+ function parseMathExpr(exprStr) {
+ if (exprStr === null || exprStr === undefined || exprStr.toString().trim() === "") return null;
+ let s = exprStr.toString().replace(/,/g, '.').replace(/\^/g, '**').replace(/%/g, '/100').trim();
+ if (!/^[0-9\.\+\-\*\/\(\)\s]+$/.test(s)) return null;
+ try {
+ let res = Function('"use strict"; return (' + s + ')')();
+ return isNaN(res) || !isFinite(res) ? null : parseFloat(res);
+ } catch (e) {
+ return null;
+ }
+ }
+
+ function calcResult(moduleKey, item) {
+ const taxa = parseFloat(item.taxa) || 0;
+ const valor = parseFloat(item.valor) || 0;
+ const parte = parseFloat(item.parte) || 0;
+ const total = parseFloat(item.total) || 0;
+ const va = parseFloat(item.va) || 0;
+ const vn = parseFloat(item.vn) || 0;
+ const tempo = parseFloat(item.tempo) || 0;
+
+ switch(moduleKey) {
+ case 'ex1': return valor * (taxa / 100);
+ case 'ex2': return valor * (1 + taxa / 100);
+ case 'ex3': return total !== 0 ? (parte / total) * 100 : 0;
+ case 'ex4': return va !== 0 ? ((vn - va) / va) * 100 : 0;
+ case 'ex5': return valor * (1 + (taxa / 100) * tempo);
+ case 'ex6': return valor * Math.pow((1 + taxa / 100), tempo);
+ default: return 0;
+ }
+ }
+
+ function formatCurrency(val) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val); }
+ function formatPercent(val) { return val.toFixed(2).replace('.', ',') + '%'; }
+
+ function saveData() {
+ localStorage.setItem("fin_student_data_v1", JSON.stringify(appData));
+ updateDashboard();
+ }
+
+ function checkSubmissionLock() {
+ if (isSubmitted) {
+ document.getElementById("submitted-banner").classList.remove("hidden");
+ document.getElementById("student-name").disabled = true;
+ document.getElementById("student-class").disabled = true;
+ const btnSubmit = document.getElementById("btn-submit");
+ btnSubmit.disabled = true;
+ document.getElementById("btn-submit-text").innerText = "Avaliação Já Entregue ✓";
+ }
+ }
+
+ function switchTab(tabKey) {
+ activeTab = tabKey;
+ document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active-tab'));
+ document.getElementById(`tab-${tabKey}`).classList.add('active-tab');
+
+ if (tabKey === 'dashboard') {
+ document.getElementById('view-dashboard').classList.remove('hidden');
+ document.getElementById('view-module').classList.add('hidden');
+ updateDashboard();
+ } else {
+ document.getElementById('view-dashboard').classList.add('hidden');
+ document.getElementById('view-module').classList.remove('hidden');
+ renderTable();
+ }
+ }
+
+ function renderTable() {
+ const configMap = {
+ ex1: "Cálculo simples de porcentagem de um valor.",
+ ex2: "Aplicação de taxas de acréscimo sobre valores base.",
+ ex3: "Determina qual a porcentagem que a parte representa do total.",
+ ex4: "Mede o aumento ou redução percentual entre o valor antigo e o valor novo.",
+ ex5: "Montante final calculado por J = C * i * t (M = C + J).",
+ ex6: "Montante acumulado com juros sobre juros (M = C * (1 + i)^t)."
+ };
+
+ document.getElementById("module-title").innerText = moduleTitles[activeTab];
+ document.getElementById("module-desc").innerText = configMap[activeTab];
+
+ const formulaInfo = moduleFormulas[activeTab];
+ if (formulaInfo) {
+ document.getElementById("formula-text").innerText = formulaInfo.formula;
+ document.getElementById("formula-explain").innerText = formulaInfo.explain;
+ document.getElementById("formula-example").innerText = formulaInfo.example;
+ }
+
+ const thead = document.getElementById("table-head");
+ const tbody = document.getElementById("table-body");
+ tbody.innerHTML = "";
+
+ let headers = [];
+ if (activeTab === 'ex1' || activeTab === 'ex2') headers = ["#", "Situação Problema", "Taxa (%)", "Valor (R$)", "Sua Resposta / Expressão"];
+ else if (activeTab === 'ex3') headers = ["#", "Situação Problema", "Parte", "Total", "Sua Resposta / Expressão (%)"];
+ else if (activeTab === 'ex4') headers = ["#", "Situação Problema", "Valor Antigo", "Valor Novo", "Sua Resposta / Expressão (%)"];
+ else if (activeTab === 'ex5' || activeTab === 'ex6') headers = ["#", "Situação Problema", "Taxa (%)", "Capital (R$)", "Tempo", "Sua Resposta / Expressão (R$)"];
+
+ thead.innerHTML = `<tr>${headers.map(h => `<th class="px-4 py-3">${h}</th>`).join('')}</tr>`;
+
+ const disabledAttr = isSubmitted ? "disabled" : "";
+ const inputStyle = `w-full p-1.5 border rounded text-center bg-amber-50/60 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-800 disabled:opacity-75 disabled:bg-slate-100`;
+
+ const data = appData[activeTab];
+ data.forEach((row, index) => {
+ const tr = document.createElement("tr");
+ tr.className = "hover:bg-slate-50 transition";
+
+ const isPercentResult = (activeTab === 'ex3' || activeTab === 'ex4');
+
+ let inputsHtml = "";
+ if (activeTab === 'ex1' || activeTab === 'ex2') {
+ inputsHtml = `
+ <td class="px-3 py-2 w-28"><input type="number" ${disabledAttr} step="any" value="${row.taxa !== undefined ? row.taxa : ''}" placeholder="Ex: 20" onchange="updateCell('${activeTab}', ${index}, 'taxa', this.value)" class="${inputStyle}"></td>
+ <td class="px-3 py-2 w-32"><input type="number" ${disabledAttr} step="any" value="${row.valor !== undefined ? row.valor : ''}" placeholder="Ex: 500" onchange="updateCell('${activeTab}', ${index}, 'valor', this.value)" class="${inputStyle}"></td>
+ `;
+ } else if (activeTab === 'ex3') {
+ inputsHtml = `
+ <td class="px-3 py-2 w-28"><input type="number" ${disabledAttr} step="any" value="${row.parte !== undefined ? row.parte : ''}" placeholder="Ex: 12" onchange="updateCell('${activeTab}', ${index}, 'parte', this.value)" class="${inputStyle}"></td>
+ <td class="px-3 py-2 w-28"><input type="number" ${disabledAttr} step="any" value="${row.total !== undefined ? row.total : ''}" placeholder="Ex: 40" onchange="updateCell('${activeTab}', ${index}, 'total', this.value)" class="${inputStyle}"></td>
+ `;
+ } else if (activeTab === 'ex4') {
+ inputsHtml = `
+ <td class="px-3 py-2 w-32"><input type="number" ${disabledAttr} step="any" value="${row.va !== undefined ? row.va : ''}" placeholder="Ex: 1000" onchange="updateCell('${activeTab}', ${index}, 'va', this.value)" class="${inputStyle}"></td>
+ <td class="px-3 py-2 w-32"><input type="number" ${disabledAttr} step="any" value="${row.vn !== undefined ? row.vn : ''}" placeholder="Ex: 1200" onchange="updateCell('${activeTab}', ${index}, 'vn', this.value)" class="${inputStyle}"></td>
+ `;
+ } else if (activeTab === 'ex5' || activeTab === 'ex6') {
+ inputsHtml = `
+ <td class="px-3 py-2 w-28"><input type="number" ${disabledAttr} step="any" value="${row.taxa !== undefined ? row.taxa : ''}" placeholder="Ex: 2" onchange="updateCell('${activeTab}', ${index}, 'taxa', this.value)" class="${inputStyle}"></td>
+ <td class="px-3 py-2 w-32"><input type="number" ${disabledAttr} step="any" value="${row.valor !== undefined ? row.valor : ''}" placeholder="Ex: 1000" onchange="updateCell('${activeTab}', ${index}, 'valor', this.value)" class="${inputStyle}"></td>
+ <td class="px-3 py-2 w-24"><input type="number" ${disabledAttr} step="any" value="${row.tempo !== undefined ? row.tempo : ''}" placeholder="Ex: 5" onchange="updateCell('${activeTab}', ${index}, 'tempo', this.value)" class="${inputStyle}"></td>
+ `;
+ }
+
+ const currentVal = row.userAns !== undefined && row.userAns !== null ? row.userAns : "";
+ const parsed = parseMathExpr(currentVal);
+ let calcPreview = "";
+ if (parsed !== null && currentVal.toString().trim() !== "") {
+ calcPreview = `<span class="text-[11px] text-blue-600 block mt-0.5 font-medium">= ${isPercentResult ? formatPercent(parsed) : formatCurrency(parsed)}</span>`;
+ }
+
+ tr.innerHTML = `
+ <td class="px-4 py-3 font-medium text-slate-500">${row.id}</td>
+ <td class="px-4 py-3 text-slate-800 font-medium">${row.desc}</td>
+ ${inputsHtml}
+ <td class="px-3 py-2 min-w-[200px]">
+ <input type="text" ${disabledAttr} value="${currentVal}" onchange="saveUserAnswer('${activeTab}', ${index}, this.value)" placeholder="Ex: ${formulaInfo ? formulaInfo.example : '100'}" class="w-full p-1.5 border rounded text-center bg-blue-50/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-sm disabled:opacity-75 disabled:bg-slate-100">
+ ${calcPreview}
+ </td>
+ `;
+ tbody.appendChild(tr);
+ });
+ lucide.createIcons();
+ }
+
+ function updateCell(mod, idx, key, val) {
+ if (isSubmitted) return;
+ appData[mod][idx][key] = val === "" ? "" : (parseFloat(val) || 0);
+ saveData();
+ }
+
+ function saveUserAnswer(mod, idx, val) {
+ if (isSubmitted) return;
+ appData[mod][idx].userAns = val;
+ saveData();
+ renderTable();
+ }
+
+ function updateDashboard() {
+ let totalEx = 0;
+ let answeredEx = 0;
+ const moduleLabels = [];
+ const moduleProgress = [];
+
+ Object.keys(appData).forEach(k => {
+ const items = appData[k];
+ totalEx += items.length;
+ const countAns = items.filter(i => i.userAns !== undefined && i.userAns !== null && i.userAns.toString().trim() !== "").length;
+ answeredEx += countAns;
+ moduleLabels.push(moduleTitles[k] || k);
+ moduleProgress.push(items.length > 0 ? Math.round((countAns / items.length) * 100) : 0);
+ });
+
+ const overallPercent = totalEx > 0 ? Math.round((answeredEx / totalEx) * 100) : 0;
+
+ document.getElementById("kpi-total-ex").innerText = totalEx;
+ document.getElementById("kpi-answered-ex").innerText = `${answeredEx} / ${totalEx}`;
+ document.getElementById("kpi-progress-percent").innerText = `${overallPercent}%`;
+ document.getElementById("kpi-status-envio").innerText = isSubmitted ? "Entregue ✓" : "Em Andamento";
+
+ if (chart1Instance) chart1Instance.destroy();
+ chart1Instance = new Chart(document.getElementById('chartJurosComp').getContext('2d'), {
+ type: 'bar',
+ data: {
+ labels: moduleLabels,
+ datasets: [{
+ label: '% Preenchido',
+ data: moduleProgress,
+ backgroundColor: '#2563eb',
+ borderRadius: 6
+ }]
+ },
+ options: {
+ responsive: true,
+ maintainAspectRatio: false,
+ scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } } }
+ }
+ });
+
+ if (chart2Instance) chart2Instance.destroy();
+ chart2Instance = new Chart(document.getElementById('chartVariacao').getContext('2d'), {
+ type: 'doughnut',
+ data: {
+ labels: ['Respondidas', 'Pendentes'],
+ datasets: [{
+ data: [answeredEx, totalEx - answeredEx],
+ backgroundColor: ['#10b981', '#cbd5e1']
+ }]
+ },
+ options: {
+ responsive: true,
+ maintainAspectRatio: false,
+ plugins: { legend: { position: 'bottom' } }
+ }
+ });
+ }
+
+ async function exportSingleReportHTML() {
+ if (isSubmitted) {
+ alert("Esta avaliação já foi finalizada e enviada anteriormente!");
+ return;
+ }
+
+ const name = document.getElementById("student-name").value.trim();
+ const studentClass = document.getElementById("student-class").value.trim();
+
+ if (!name) {
+ alert("Por favor, preencha o seu Nome Completo no topo da página antes de enviar!");
+ document.getElementById("student-name").focus();
+ return;
+ }
+
+ if (!confirm("Tem certeza de que deseja finalizar e enviar sua avaliação? Após o envio, não será possível alterar suas respostas.")) {
+ return;
+ }
+
+ let totalQuestions = 0;
+ let correctQuestions = 0;
+ let reportTablesHtml = "";
+
+ Object.keys(appData).forEach(modKey => {
+ const items = appData[modKey];
+ if (items.length === 0) return;
+
+ let tableRows = "";
+ items.forEach(item => {
+ totalQuestions++;
+ const expected = calcResult(modKey, item);
+ const rawAns = item.userAns !== undefined && item.userAns !== null ? item.userAns.toString().trim() : "";
+ const userVal = parseMathExpr(rawAns);
+ const isPercent = (modKey === 'ex3' || modKey === 'ex4');
+
+ if (userVal !== null && expected !== 0) {
+ const diff = Math.abs(userVal - expected);
+ if (diff < 0.1 || (diff / Math.abs(expected)) < 0.005) {
+ correctQuestions++;
+ }
+ }
+
+ let studentParams = "";
+ if (modKey === 'ex1' || modKey === 'ex2') {
+ studentParams = `Taxa: ${item.taxa || '-'}% | Valor: R$ ${item.valor || '-'}`;
+ } else if (modKey === 'ex3') {
+ studentParams = `Parte: ${item.parte || '-'} | Total: ${item.total || '-'}`;
+ } else if (modKey === 'ex4') {
+ studentParams = `V. Antigo: R$ ${item.va || '-'} | V. Novo: R$ ${item.vn || '-'}`;
+ } else if (modKey === 'ex5' || modKey === 'ex6') {
+ studentParams = `Taxa: ${item.taxa || '-'}% | Capital: R$ ${item.valor || '-'} | Tempo: ${item.tempo || '-'}`;
+ }
+
+ let formattedUser = "Não respondido";
+ if (rawAns !== "") {
+ formattedUser = userVal !== null ? `${rawAns} (= ${isPercent ? formatPercent(userVal) : formatCurrency(userVal)})` : rawAns;
+ }
+
+ tableRows += `
+ <tr style="border-bottom: 1px solid #e2e8f0;">
+ <td style="padding: 8px;">${item.id}</td>
+ <td style="padding: 8px;">${item.desc}</td>
+ <td style="padding: 8px; font-size: 12px; background-color: #fef3c7;">${studentParams}</td>
+ <td style="padding: 8px; text-align: center; font-weight: bold;">${formattedUser}</td>
+ </tr>
+ `;
+ });
+
+ reportTablesHtml += `
+ <div style="margin-bottom: 25px;">
+ <h3 style="color: #1e293b; border-bottom: 2px solid #2563eb; padding-bottom: 5px; margin-bottom: 10px;">${moduleTitles[modKey]}</h3>
+ <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+ <thead>
+ <tr style="background-color: #f1f5f9; color: #475569;">
+ <th style="padding: 8px;">#</th>
+ <th style="padding: 8px;">Exercício</th>
+ <th style="padding: 8px;">Dados Extraídos pelo Aluno</th>
+ <th style="padding: 8px; text-align: center;">Sua Resposta Registrada</th>
+ </tr>
+ </thead>
+ <tbody>${tableRows}</tbody>
+ </table>
+ </div>
+ `;
+ });
+
+ const scorePercent = totalQuestions > 0 ? ((correctQuestions / totalQuestions) * 100).toFixed(1) : 0;
+ const dateStr = new Date().toLocaleString('pt-BR');
+
+ // === ENVIO SILENCIOSO PARA A PLANILHA DO GOOGLE ===
+ const dadosEnvio = {
+ nome: name,
+ turma: studentClass,
+ exercicio: "Laboratório de Cálculos Financeiros (120 Q)",
+ totalQuestoes: totalQuestions,
+ acertos: correctQuestions,
+ porcentagem: scorePercent
+ };
+
+ try {
+ await fetch(SCRIPT_URL, {
+ method: "POST",
+ mode: "no-cors",
+ headers: { "Content-Type": "application/json" },
+ body: JSON.stringify(dadosEnvio)
+ });
+ } catch (err) {
+ console.error("Erro ao enviar para a planilha:", err);
+ }
+
+ // === BLOQUEIA NOVAS RESPOSTAS E ATIVIDADES DO ALUNO ===
+ localStorage.setItem("fin_submitted_v1", "true");
+ isSubmitted = true;
+ checkSubmissionLock();
+
+ // === COMPROVANTE DE ENTREGA PARA O ALUNO (SEM GABARITO / NOTA) ===
+ const reportHtmlContent = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+ <meta charset="UTF-8">
+ <title>Comprovante de Entrega - ${name}</title>
+ <style>
+ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8fafc; color: #334155; margin: 0; padding: 20px; }
+ .container { max-width: 950px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+ .header { border-bottom: 2px solid #10b981; padding-bottom: 15px; margin-bottom: 20px; }
+ .success-box { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 12px 18px; border-radius: 8px; margin-bottom: 20px; font-weight: 600; font-size: 14px; }
+ </style>
+</head>
+<body>
+ <div class="container">
+ <div class="header">
+ <h1 style="margin: 0; color: #0f172a; font-size: 22px;">Comprovante de Entrega da Avaliação</h1>
+ <p style="margin: 5px 0 0 0; color: #64748b;"><strong>Aluno:</strong> ${name} | <strong>Turma:</strong> ${studentClass || 'N/A'}</p>
+ <p style="margin: 2px 0 0 0; color: #94a3b8; font-size: 12px;">Entregue em: ${dateStr}</p>
+ </div>
+
+ <div class="success-box">
+ ✓ Avaliação enviada com sucesso ao professor! Este é o seu comprovante com as respostas enviadas. A nota final será divulgada pelo seu professor.
+ </div>
+
+ ${reportTablesHtml}
+
+ <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+ Comprovante de Entrega Gerado Automaticamente — Laboratório de Cálculos Financeiros
+ </div>
+ </div>
+</body>
+</html>`;
+
+ const blob = new Blob([reportHtmlContent], { type: 'text/html;charset=utf-8;' });
+ const link = document.createElement("a");
+ const sanitizedName = name.replace(/[^a-zA-Z0-9]/g, "_");
+ link.href = URL.createObjectURL(blob);
+ link.download = `Comprovante_Entrega_${sanitizedName}.html`;
+ link.click();
+
+ alert("✅ Avaliação entregue com sucesso ao professor!\nAs respostas foram salvas e bloqueadas nesta página.");
+ if (activeTab !== 'dashboard') renderTable();
+ }
+
+ window.onload = function() {
+ lucide.createIcons();
+ checkSubmissionLock();
+ updateDashboard();
+ };
+ </script>
+</body>
+</html>

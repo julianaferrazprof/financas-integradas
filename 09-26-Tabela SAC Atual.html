@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Atividade Prática Interativa: Tabela SAC (FIINT)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb',
+              700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { height: 8px; width: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen antialiased pb-16 pt-32 sm:pt-28">
+
+  <!-- DASHBOARD FIXO DE PROGRESSO (TOPO) -->
+  <header class="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-blue-50 text-blue-600 rounded-xl border border-blue-200 shrink-0">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-base font-bold text-slate-900 leading-tight flex items-center gap-2">
+            📊 Financiamento por Tabela SAC (FIINT)
+          </h1>
+          <p class="text-xs text-slate-500 flex items-center gap-2">
+            <span>Atividade Prática Interativa</span>
+            <span id="salvamento-status" class="text-emerald-600 font-semibold hidden">● Auto-salvo</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Barra de Progresso Visual e Ações de Rascunho -->
+      <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+        <div class="w-full sm:w-64 bg-slate-50 p-2 rounded-xl border border-slate-200">
+          <div class="flex justify-between items-center text-xs font-semibold mb-1">
+            <span class="text-slate-600" id="progress-label">Progresso</span>
+            <span class="text-blue-600 font-mono text-[11px]" id="progress-text">0% (0/0)</span>
+          </div>
+          <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+            <div id="progress-bar" class="bg-gradient-to-r from-blue-600 to-indigo-600 h-full rounded-full transition-all duration-300 w-0"></div>
+          </div>
+        </div>
+
+        <!-- Botões Salvar/Carregar Rascunho em Arquivo -->
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <button onclick="exportarRascunhoArquivo()" title="Baixar arquivo de rascunho (.json)"
+            class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg border border-slate-300 transition flex items-center gap-1.5 shrink-0">
+            💾 <span class="hidden sm:inline">Baixar</span> Rascunho
+          </button>
+          
+          <label title="Carregar arquivo de rascunho (.json)"
+            class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg border border-slate-300 transition cursor-pointer flex items-center gap-1.5 shrink-0">
+            📂 <span class="hidden sm:inline">Carregar</span> Rascunho
+            <input type="file" id="input-importar-rascunho" accept=".json" class="hidden" onchange="importarRascunhoArquivo(event)" />
+          </label>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+
+    <!-- AVISO SE JÁ RESPONDEU -->
+    <div id="banner-bloqueio" class="hidden bg-amber-50 border border-amber-200 rounded-2xl p-4 text-amber-800 text-sm flex items-center gap-3 shadow-sm">
+      <svg class="w-6 h-6 shrink-0 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+      </svg>
+      <div>
+        <strong class="font-bold block">🔒 Atividade Finalizada e Enviada!</strong>
+        <span id="banner-bloqueio-msg">As respostas foram registradas e os campos travados para alteração.</span>
+      </div>
+    </div>
+
+    <!-- CABEÇALHO DE IDENTIFICAÇÃO DO ALUNO -->
+    <section class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm relative overflow-hidden">
+      <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+        👤 Identificação do Aluno
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+          <label for="aluno-nome" class="block text-xs font-medium text-slate-600 uppercase tracking-wider mb-2">
+            Nome Completo do Aluno <span class="text-rose-500">*</span>
+          </label>
+          <input type="text" id="aluno-nome" placeholder="Digite seu nome completo..."
+            class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm" />
+        </div>
+
+        <div>
+          <label for="aluno-turma" class="block text-xs font-medium text-slate-600 uppercase tracking-wider mb-2">
+            Turma / Série <span class="text-rose-500">*</span>
+          </label>
+          <input type="text" id="aluno-turma" placeholder="Ex: 3º Ano A, Finanças 2026/1..."
+            class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm" />
+        </div>
+
+        <div>
+          <label for="grupo-select" class="block text-xs font-medium text-slate-600 uppercase tracking-wider mb-2">
+            Grupo de Trabalho <span class="text-rose-500">*</span>
+          </label>
+          <select id="grupo-select"
+            class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm">
+            <option value="" disabled selected>-- Selecione o Grupo --</option>
+            <option value="ALFA">Grupo ALFA (20 Tabelas SAC)</option>
+            <option value="BETA">Grupo BETA (20 Tabelas SAC)</option>
+            <option value="GAMA">Grupo GAMA (15 Tabelas SAC)</option>
+            <option value="DELTA">Grupo DELTA (15 Tabelas SAC)</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- ÁREA DINÂMICA ONDE AS TABELAS SAC SERÃO CARREGADAS -->
+    <div id="exercicios-container" class="space-y-8">
+      <div id="empty-state" class="bg-white border border-dashed border-slate-300 rounded-2xl p-12 text-center">
+        <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-200 text-2xl">
+          📋
+        </div>
+        <h3 class="text-lg font-semibold text-slate-900 mb-2">Aguardando Seleção de Grupo</h3>
+        <p class="text-slate-500 max-w-md mx-auto text-sm">
+          Por favor, informe seu Nome, Turma e selecione seu Grupo acima para carregar suas tabelas de exercício.
+        </p>
+      </div>
+    </div>
+
+    <!-- BARRAS DE AÇÃO / BOTÃO ENVIAR -->
+    <div class="flex flex-col sm:flex-row justify-between items-center bg-white border border-slate-200 rounded-2xl p-6 shadow-sm gap-4">
+      <p class="text-xs text-slate-500">
+        💡 <strong>Dica:</strong> Seu progresso é salvo automaticamente a cada digitação e preservado caso mude de grupo.
+      </p>
+      <button id="btn-enviar" disabled
+        class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3.5 rounded-xl shadow-md shadow-blue-500/20 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        Finalizar e Enviar
+      </button>
+    </div>
+
+  </main>
+
+  <!-- MODAL DE ALERTA DE BLOQUEIO DE COLA (ANTI-PASTE) -->
+  <div id="modal-anti-paste" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden p-4">
+    <div class="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 text-center shadow-2xl relative">
+      <div class="w-14 h-14 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-3 border border-amber-200 text-2xl">
+        🛡️
+      </div>
+      <h3 class="text-lg font-bold text-slate-900 mb-2">Digitação Manual Obrigatória</h3>
+      <p class="text-xs text-slate-600 leading-relaxed mb-6">
+        A opção de <strong>colar respostas</strong> (de IAs ou blocos de texto) está desativada nesta atividade.<br><br>
+        A digitação manual dos cálculos e valores numéricos é parte essencial do seu processo de aprendizagem, auxiliando no desenvolvimento da <strong>atenção aos detalhes</strong>, <strong>raciocínio lógico</strong> e fixação de conteúdos de finanças.
+      </p>
+      <button onclick="fecharModalAntiPaste()"
+        class="w-full bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold py-3 rounded-xl transition-colors">
+        Entendido, vou digitar!
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL DE RESULTADOS -->
+  <div id="modal-resultado" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden p-4">
+    <div class="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+      <div id="modal-accent-bar" class="absolute top-0 left-0 right-0 h-2 bg-blue-600"></div>
+
+      <div class="text-center mb-6">
+        <div id="modal-badge-icon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 bg-blue-50 text-blue-600 border border-blue-200 text-2xl">
+          🎯
+        </div>
+        <h3 class="text-2xl font-bold text-slate-900 mb-1" id="modal-titulo">Resultado da Atividade</h3>
+        <p class="text-xs text-slate-500" id="modal-datahora"></p>
+      </div>
+
+      <div class="space-y-4 mb-6">
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex justify-between items-center text-sm">
+          <span class="text-slate-500">Aluno / Turma:</span>
+          <span class="font-semibold text-slate-900" id="res-nome-turma">-</span>
+        </div>
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex justify-between items-center text-sm">
+          <span class="text-slate-500">Grupo de Trabalho:</span>
+          <span class="font-semibold text-blue-600" id="res-grupo">-</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center">
+            <span class="block text-xs text-slate-500 uppercase tracking-wider mb-1">Acertos</span>
+            <span class="text-2xl font-bold text-emerald-600" id="res-acertos">0 / 0</span>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center">
+            <span class="block text-xs text-slate-500 uppercase tracking-wider mb-1">Aproveitamento</span>
+            <span class="text-2xl font-bold text-blue-600" id="res-nota">0%</span>
+          </div>
+        </div>
+
+        <div id="api-status-box" class="text-xs p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 flex items-center gap-2">
+          <svg class="w-4 h-4 animate-spin text-blue-600 hidden" id="api-spinner" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span id="api-status-msg">Enviando registro para a planilha...</span>
+        </div>
+      </div>
+
+      <button onclick="fecharModal()"
+        class="w-full bg-slate-800 hover:bg-slate-900 text-white font-medium py-3 rounded-xl transition-colors">
+        Concluir e Fechar
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // URL do Webhook do Google Apps Script
+    const URL_API = "https://script.google.com/macros/s/AKfycbxiJ_Yt_DMr2rWOPtwrLXLuAnLXA5_FT6EtVPAjRzMxXXA3xc_MWjA0Exyd872asdoT/exec";
+
+    // Chaves de armazenamento Local
+    const KEY_ENVIADO = "sac_resposta_enviada";
+    const KEY_RASCUNHO = "sac_rascunho_dados_v2";
+
+    // Banco de Exercícios ALFA/BETA (20 Tabelas)
+    const BANCO_ALFA_BETA = [
+      { id: "e1", financiado: 6000, parcelas: 3, taxa: 2.0 },
+      { id: "e2", financiado: 8000, parcelas: 4, taxa: 2.5 },
+      { id: "e3", financiado: 10000, parcelas: 5, taxa: 2.0 },
+      { id: "e4", financiado: 12000, parcelas: 6, taxa: 1.8 },
+      { id: "e5", financiado: 15000, parcelas: 5, taxa: 3.0 },
+      { id: "e6", financiado: 18000, parcelas: 6, taxa: 2.2 },
+      { id: "e7", financiado: 20000, parcelas: 4, taxa: 2.5 },
+      { id: "e8", financiado: 24000, parcelas: 8, taxa: 1.5 },
+      { id: "e9", financiado: 30000, parcelas: 6, taxa: 2.0 },
+      { id: "e10", financiado: 36000, parcelas: 12, taxa: 1.2 },
+      { id: "e11", financiado: 40000, parcelas: 10, taxa: 2.0 },
+      { id: "e12", financiado: 48000, parcelas: 8, taxa: 2.5 },
+      { id: "e13", financiado: 50000, parcelas: 5, taxa: 3.0 },
+      { id: "e14", financiado: 60000, parcelas: 12, taxa: 1.8 },
+      { id: "e15", financiado: 72000, parcelas: 6, taxa: 2.0 },
+      { id: "e16", financiado: 80000, parcelas: 10, taxa: 1.5 },
+      { id: "e17", financiado: 90000, parcelas: 6, taxa: 2.5 },
+      { id: "e18", financiado: 100000, parcelas: 10, taxa: 2.0 },
+      { id: "e19", financiado: 120000, parcelas: 12, taxa: 1.5 },
+      { id: "e20", financiado: 150000, parcelas: 10, taxa: 2.2 }
+    ];
+
+    // Banco de Exercícios GAMA/DELTA (15 Tabelas)
+    const BANCO_GAMA_DELTA = [
+      { id: "e1", financiado: 6000, parcelas: 3, taxa: 2.0 },
+      { id: "e2", financiado: 8000, parcelas: 4, taxa: 2.5 },
+      { id: "e3", financiado: 10000, parcelas: 5, taxa: 2.0 },
+      { id: "e4", financiado: 12000, parcelas: 6, taxa: 1.8 },
+      { id: "e5", financiado: 15000, parcelas: 5, taxa: 3.0 },
+      { id: "e6", financiado: 18000, parcelas: 6, taxa: 2.2 },
+      { id: "e7", financiado: 20000, parcelas: 4, taxa: 2.5 },
+      { id: "e8", financiado: 24000, parcelas: 8, taxa: 1.5 },
+      { id: "e9", financiado: 30000, parcelas: 6, taxa: 2.0 },
+      { id: "e10", financiado: 36000, parcelas: 12, taxa: 1.2 },
+      { id: "e11", financiado: 40000, parcelas: 10, taxa: 2.0 },
+      { id: "e12", financiado: 48000, parcelas: 8, taxa: 2.5 },
+      { id: "e13", financiado: 50000, parcelas: 5, taxa: 3.0 },
+      { id: "e14", financiado: 60000, parcelas: 12, taxa: 1.8 },
+      { id: "e15", financiado: 72000, parcelas: 6, taxa: 2.0 }
+    ];
+
+    // Variáveis Globais de Estado
+    let exerciciosAtuais = [];
+    let gabaritoMatematico = {};
+    let totalLacunas = 0;
+    let atividadeFinalizada = false;
+    let grupoAnteriorSelecionado = "";
+    
+    // Objeto contendo respostas salvos por grupo: { ALFA: {...}, BETA: {...}, ... }
+    let respostasPorGrupo = {};
+
+    // Elementos DOM
+    const inputNome = document.getElementById('aluno-nome');
+    const inputTurma = document.getElementById('aluno-turma');
+    const selectGrupo = document.getElementById('grupo-select');
+    const containerExercicios = document.getElementById('exercicios-container');
+    const btnEnviar = document.getElementById('btn-enviar');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    const bannerBloqueio = document.getElementById('banner-bloqueio');
+    const salvamentoStatus = document.getElementById('salvamento-status');
+
+    // Embaralhamento de Arrays (Fisher-Yates)
+    function embaralhar(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // Inicialização da Página
+    window.addEventListener('DOMContentLoaded', () => {
+      // 1. Tenta carregar rascunho anterior do localStorage
+      const rascunhoSalvo = localStorage.getItem(KEY_RASCUNHO);
+      if (rascunhoSalvo) {
+        try {
+          const dadosRascunho = JSON.parse(rascunhoSalvo);
+          restaurarEstadoGeral(dadosRascunho);
+        } catch (e) {
+          console.error("Erro ao carregar rascunho salvo", e);
+        }
+      }
+
+      // 2. Se a atividade já foi enviada no navegador, bloqueia edição
+      const registroExistente = localStorage.getItem(KEY_ENVIADO);
+      if (registroExistente) {
+        const dados = JSON.parse(registroExistente);
+        bloquearAtividade(dados);
+        bloquearCamposSemGabarito();
+      }
+    });
+
+    // Eventos nos campos de cabeçalho
+    inputNome.addEventListener('input', () => { salvarEstadoAtual(); validarFormulario(); });
+    inputTurma.addEventListener('input', () => { salvarEstadoAtual(); validarFormulario(); });
+    
+    selectGrupo.addEventListener('change', function () {
+      if (atividadeFinalizada) return;
+      
+      // Guarda progresso do grupo anterior antes de trocar
+      if (grupoAnteriorSelecionado && grupoAnteriorSelecionado !== this.value) {
+        guardarRespostasDoGrupoAtual(grupoAnteriorSelecionado);
+      }
+
+      grupoAnteriorSelecionado = this.value;
+      carregarExerciciosEmbaralhados(this.value);
+      restaurarRespostasDoGrupoAtual(this.value);
+
+      salvarEstadoAtual();
+      validarFormulario();
+    });
+
+    btnEnviar.addEventListener('click', enviarAtividade);
+
+    function guardarRespostasDoGrupoAtual(grupo) {
+      if (!grupo) return;
+      if (!respostasPorGrupo[grupo]) respostasPorGrupo[grupo] = {};
+
+      document.querySelectorAll('.sac-input').forEach(input => {
+        const key = `${input.getAttribute('data-ex')}_${input.getAttribute('data-mes')}_${input.getAttribute('data-campo')}`;
+        respostasPorGrupo[grupo][key] = input.value;
+      });
+    }
+
+    function restaurarRespostasDoGrupoAtual(grupo) {
+      if (!grupo || !respostasPorGrupo[grupo]) return;
+      const resp = respostasPorGrupo[grupo];
+
+      document.querySelectorAll('.sac-input').forEach(input => {
+        const key = `${input.getAttribute('data-ex')}_${input.getAttribute('data-mes')}_${input.getAttribute('data-campo')}`;
+        if (resp[key] !== undefined) {
+          input.value = resp[key];
+          atualizarResultadoLive(input);
+        }
+      });
+      atualizarProgresso();
+    }
+
+    function salvarEstadoAtual() {
+      if (atividadeFinalizada) return;
+
+      const grupoAtivo = selectGrupo.value;
+      if (grupoAtivo) {
+        guardarRespostasDoGrupoAtual(grupoAtivo);
+      }
+
+      const estado = {
+        nome: inputNome.value,
+        turma: inputTurma.value,
+        grupo: grupoAtivo,
+        respostasPorGrupo: respostasPorGrupo,
+        exerciciosOrdemIds: exerciciosAtuais.map(e => e.id)
+      };
+
+      localStorage.setItem(KEY_RASCUNHO, JSON.stringify(estado));
+      
+      salvamentoStatus.classList.remove('hidden');
+      setTimeout(() => { salvamentoStatus.classList.add('hidden'); }, 1500);
+    }
+
+    function restaurarEstadoGeral(dados) {
+      if (dados.nome) inputNome.value = dados.nome;
+      if (dados.turma) inputTurma.value = dados.turma;
+      if (dados.respostasPorGrupo) respostasPorGrupo = dados.respostasPorGrupo;
+
+      if (dados.grupo) {
+        selectGrupo.value = dados.grupo;
+        grupoAnteriorSelecionado = dados.grupo;
+        carregarExerciciosEmbaralhados(dados.grupo, dados.exerciciosOrdemIds);
+        restaurarRespostasDoGrupoAtual(dados.grupo);
+      }
+    }
+
+    // Exportar Rascunho em Arquivo .json
+    function exportarRascunhoArquivo() {
+      salvarEstadoAtual();
+      const grupoAtivo = selectGrupo.value;
+      if (grupoAtivo) guardarRespostasDoGrupoAtual(grupoAtivo);
+
+      const dadosRascunho = {
+        versao: "2.0",
+        dataExportacao: new Date().toISOString(),
+        nome: inputNome.value,
+        turma: inputTurma.value,
+        grupo: selectGrupo.value,
+        respostasPorGrupo: respostasPorGrupo
+      };
+
+      const jsonStr = JSON.stringify(dadosRascunho, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement("a");
+      const nomeArquivo = (inputNome.value.trim() || "Aluno").replace(/[^a-zA-Z0-9]/g, "_");
+      a.href = url;
+      a.download = `rascunho_SAC_${nomeArquivo}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Importar Rascunho de Arquivo .json
+    function importarRascunhoArquivo(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const dados = JSON.parse(e.target.result);
+          if (dados.respostasPorGrupo) {
+            restaurarEstadoGeral(dados);
+            salvarEstadoAtual();
+            alert("✅ Rascunho do arquivo carregado com sucesso!");
+          } else {
+            alert("⚠️ O arquivo selecionado não possui um formato de rascunho válido.");
+          }
+        } catch (err) {
+          alert("❌ Erro ao ler o arquivo JSON de rascunho.");
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = ''; // Limpa para permitir recarregar o mesmo arquivo
+    }
+
+    function formatarMoeda(v) {
+      if (typeof v !== 'number' || isNaN(v)) return 'R$ —';
+      return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    // Avaliador de Expressões Puramente Numéricas (Impede atalhos com texto 'SD - A' etc)
+    function avaliarExpressao(str) {
+      if (!str || typeof str !== 'string') return null;
+      let expr = str.trim().replace(/R\$/gi, '').replace(/\s+/g, '');
+      if (!expr) return null;
+
+      // Suporta porcentagem (ex: 2% -> (2/100))
+      expr = expr.replace(/(\d+(?:[.,]\d+)?)%/g, '($1/100)').replace(/x/gi, '*').replace(/÷|:/g, '/');
+
+      // Formatação decimal brasileira
+      if (expr.includes(',')) {
+        expr = expr.replace(/\./g, '').replace(/,/g, '.');
+      } else {
+        expr = expr.replace(/(\d+)\.(\d{3})(?=\D|$)/g, '$1$2');
+      }
+
+      // ACEITA APENAS NÚMEROS E OPERADORES MATEMÁTICOS SIMPLES (Nenhuma letra!)
+      if (!/^[0-9.+\-*/()]+$/.test(expr)) return null;
+
+      try {
+        const res = Function(`'use strict'; return (${expr})`)();
+        if (typeof res === 'number' && !isNaN(res) && isFinite(res)) return res;
+      } catch (e) { return null; }
+      return null;
+    }
+
+    // Cálculo Matemático Oficial da Tabela SAC e Totais
+    function calcularGabaritoSAC(financiado, parcelas, taxa) {
+      const amortizacao = financiado / parcelas;
+      let saldo = financiado;
+      let linhas = [];
+
+      let totAmort = 0;
+      let totJuros = 0;
+      let totPrest = 0;
+
+      for (let k = 1; k <= parcelas; k++) {
+        const juros = saldo * (taxa / 100);
+        const prestacao = amortizacao + juros;
+        const novoSaldo = saldo - amortizacao;
+        const novoSaldoFinal = Math.abs(novoSaldo) < 0.0001 ? 0 : novoSaldo;
+
+        totAmort += amortizacao;
+        totJuros += juros;
+        totPrest += prestacao;
+
+        linhas.push({
+          mes: k,
+          saldoInicial: saldo,
+          amortizacao: amortizacao,
+          juros: juros,
+          prestacao: prestacao,
+          novoSaldo: novoSaldoFinal
+        });
+        saldo = novoSaldoFinal;
+      }
+
+      return {
+        linhas,
+        totais: {
+          amortizacao: totAmort,
+          juros: totJuros,
+          prestacao: totPrest
+        }
+      };
+    }
+
+    function carregarExerciciosEmbaralhados(grupo, ordemIdsSalva = null) {
+      let bancoOrigem = (grupo === 'ALFA' || grupo === 'BETA') ? BANCO_ALFA_BETA : BANCO_GAMA_DELTA;
+      
+      if (ordemIdsSalva && Array.isArray(ordemIdsSalva) && ordemIdsSalva.length > 0) {
+        exerciciosAtuais = ordemIdsSalva
+          .map(id => bancoOrigem.find(item => item.id === id))
+          .filter(Boolean);
+        if (exerciciosAtuais.length === 0) exerciciosAtuais = embaralhar(bancoOrigem);
+      } else {
+        exerciciosAtuais = embaralhar(bancoOrigem);
+      }
+
+      containerExercicios.innerHTML = '';
+      gabaritoMatematico = {};
+      totalLacunas = 0;
+
+      exerciciosAtuais.forEach((ex, idx) => {
+        const numTabela = idx + 1;
+        const calculos = calcularGabaritoSAC(ex.financiado, ex.parcelas, ex.taxa);
+        gabaritoMatematico[ex.id] = calculos;
+
+        // Lacunas por tabela:
+        // Mês 1: 4 lacunas (Amort, Juros, Prest, NovoSaldo) - Saldo Inicial 1 é fixo
+        // Mês 2..N: 5 lacunas por mês (SaldoInicial, Amort, Juros, Prest, NovoSaldo)
+        // Linha de Totais: 3 lacunas (Total Amort, Total Juros, Total Prest)
+        const lacunasTabela = 4 + (ex.parcelas - 1) * 5 + 3;
+        totalLacunas += lacunasTabela;
+
+        const card = document.createElement('div');
+        card.className = 'bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6';
+
+        card.innerHTML = `
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <span class="text-xs font-semibold text-blue-600 uppercase tracking-widest">Tabela ${numTabela} de ${exerciciosAtuais.length}</span>
+              <h3 class="text-xl font-bold text-slate-900">Financiamento por Tabela SAC</h3>
+            </div>
+            <div class="flex flex-wrap gap-2 text-xs font-mono">
+              <span class="bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg text-slate-600">
+                Valor: <strong class="text-slate-900">${formatarMoeda(ex.financiado)}</strong>
+              </span>
+              <span class="bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg text-slate-600">
+                Prazo: <strong class="text-slate-900">${ex.parcelas} meses</strong>
+              </span>
+              <span class="bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg text-slate-600">
+                Taxa: <strong class="text-blue-600">${ex.taxa.toFixed(2)}% a.m.</strong>
+              </span>
+            </div>
+          </div>
+
+          <!-- TABELA DE PREENCHIMENTO INTERATIVA -->
+          <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-700 uppercase font-mono border-b border-slate-200">
+                <tr>
+                  <th class="p-3">Mês</th>
+                  <th class="p-3">
+                    Saldo Inicial (R$)
+                    <div class="text-[10px] text-slate-500 font-sans font-normal normal-case mt-0.5">Mês 1 = Financiado<br>Mês > 1 = SD Anterior</div>
+                  </th>
+                  <th class="p-3 text-blue-700">
+                    Amortização (A)
+                    <div class="text-[10px] text-blue-600 font-sans font-normal normal-case mt-0.5">A = Financiado ÷ Parcelas</div>
+                  </th>
+                  <th class="p-3 text-amber-700">
+                    Juros (J)
+                    <div class="text-[10px] text-amber-600 font-sans font-normal normal-case mt-0.5">J = Saldo Inicial × Taxa</div>
+                  </th>
+                  <th class="p-3 text-emerald-700">
+                    Prestação (P)
+                    <div class="text-[10px] text-emerald-600 font-sans font-normal normal-case mt-0.5">P = Amortização + Juros</div>
+                  </th>
+                  <th class="p-3 text-indigo-700">
+                    Novo Saldo Devedor
+                    <div class="text-[10px] text-indigo-600 font-sans font-normal normal-case mt-0.5">SD = Saldo Inicial - A</div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 font-mono bg-white">
+                <!-- Linha Mês 0 -->
+                <tr class="bg-slate-50/50 text-slate-400">
+                  <td class="p-3 font-bold text-slate-500">0</td>
+                  <td class="p-3">-</td><td class="p-3">-</td><td class="p-3">-</td><td class="p-3">-</td>
+                  <td class="p-3 font-bold text-slate-800">${formatarMoeda(ex.financiado)}</td>
+                </tr>
+
+                <!-- Linhas dos Meses de Parcela -->
+                ${calculos.linhas.map(l => `
+                  <tr class="hover:bg-slate-50/80 transition-colors">
+                    <td class="p-3 font-bold text-slate-700">${l.mes}</td>
+                    
+                    <!-- Saldo Inicial: Parcela 1 é FIXA. Parcela 2 em diante é CAMPO DIGITÁVEL -->
+                    <td class="p-2 border-r border-slate-100">
+                      ${l.mes === 1 ? `
+                        <div class="px-2.5 py-1.5 font-bold text-slate-700 bg-slate-100 rounded-lg text-right border border-slate-200">
+                          ${formatarMoeda(l.saldoInicial)}
+                        </div>
+                      ` : `
+                        <input type="text" data-ex="${ex.id}" data-mes="${l.mes}" data-campo="saldoInicial"
+                          placeholder="SD Mês ${l.mes-1}" class="sac-input w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 text-right transition-all" />
+                        <div class="calc-preview text-[10px] text-right min-h-[16px] mt-0.5"><span class="text-slate-400">= R$ —</span></div>
+                      `}
+                    </td>
+
+                    <td class="p-2 border-r border-slate-100">
+                      <input type="text" data-ex="${ex.id}" data-mes="${l.mes}" data-campo="amortizacao"
+                        placeholder="Valor de A" class="sac-input w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 text-right transition-all" />
+                      <div class="calc-preview text-[10px] text-right min-h-[16px] mt-0.5"><span class="text-slate-400">= R$ —</span></div>
+                    </td>
+
+                    <td class="p-2 border-r border-slate-100">
+                      <input type="text" data-ex="${ex.id}" data-mes="${l.mes}" data-campo="juros"
+                        placeholder="Valor de J" class="sac-input w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-900 focus:bg-white focus:ring-2 focus:ring-amber-500 text-right transition-all" />
+                      <div class="calc-preview text-[10px] text-right min-h-[16px] mt-0.5"><span class="text-slate-400">= R$ —</span></div>
+                    </td>
+
+                    <td class="p-2 border-r border-slate-100">
+                      <input type="text" data-ex="${ex.id}" data-mes="${l.mes}" data-campo="prestacao"
+                        placeholder="Valor de P" class="sac-input w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 text-right transition-all" />
+                      <div class="calc-preview text-[10px] text-right min-h-[16px] mt-0.5"><span class="text-slate-400">= R$ —</span></div>
+                    </td>
+
+                    <td class="p-2">
+                      <input type="text" data-ex="${ex.id}" data-mes="${l.mes}" data-campo="novoSaldo"
+                        placeholder="Novo SD" class="sac-input w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 text-right transition-all" />
+                      <div class="calc-preview text-[10px] text-right min-h-[16px] mt-0.5"><span class="text-slate-400">= R$ —</span></div>
+                    </td>
+                  </tr>
+                `).join('')}
+
+                <!-- LINHA DE TOTAIS (SOMATÓRIO EXIGIDO) -->
+                <tr class="bg-slate-100/80 font-bold border-t-2 border-slate-300 text-slate-900">
+                  <td class="p-3 uppercase">TOTAL</td>
+                  <td class="p-3 text-center text-slate-400">-</td>
+                  
+                  <td class="p-2">
+                    <input type="text" data-ex="${ex.id}" data-mes="total" data-campo="totalAmortizacao"
+                      placeholder="∑ Amortização" class="sac-input w-full bg-white border border-blue-300 font-bold rounded-lg px-2.5 py-1.5 text-blue-900 focus:ring-2 focus:ring-blue-500 text-right transition-all" />
+                    <div class="calc-preview text-[10px] text-right min-h-[16px] mt-0.5"><span class="text-slate-400">= R$ —</span></div>
+                  </td>
+
+                  <td class="p-2">
+                    <input type="text" data-ex="${ex.id}" data-mes="total" data-campo="totalJuros"
+                      placeholder="∑ Juros" class="sac-input w-full bg-white border border-amber-300 font-bold rounded-lg px-2.5 py-1.5 text-amber-900 focus:ring-2 focus:ring-amber-500 text-right transition-all" />
+                    <div class="calc-preview text-[10px] text-right min-h-[16px] mt-0.5"><span class="text-slate-400">= R$ —</span></div>
+                  </td>
+
+                  <td class="p-2">
+                    <input type="text" data-ex="${ex.id}" data-mes="total" data-campo="totalPrestacao"
+                      placeholder="∑ Total Pago" class="sac-input w-full bg-white border border-emerald-300 font-bold rounded-lg px-2.5 py-1.5 text-emerald-900 focus:ring-2 focus:ring-emerald-500 text-right transition-all" />
+                    <div class="calc-preview text-[10px] text-right min-h-[16px] mt-0.5"><span class="text-slate-400">= R$ —</span></div>
+                  </td>
+
+                  <td class="p-3 text-center text-slate-400">-</td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+        `;
+        containerExercicios.appendChild(card);
+      });
+
+      // Configuração de Eventos nos Inputs
+      const todosInputs = Array.from(document.querySelectorAll('.sac-input'));
+
+      todosInputs.forEach((input, index) => {
+        // Bloqueio de Cola (Anti-Paste)
+        input.addEventListener('paste', function(e) {
+          e.preventDefault();
+          mostrarModalAntiPaste();
+        });
+
+        // Evento de Digitação e Atualização em Tempo Real
+        input.addEventListener('input', function() {
+          atualizarResultadoLive(this);
+          atualizarProgresso();
+          salvarEstadoAtual();
+        });
+
+        // Navegação com Tecla Enter
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            const proximoInput = todosInputs[index + 1];
+            if (proximoInput) {
+              proximoInput.focus();
+              proximoInput.select();
+            }
+          }
+        });
+      });
+
+      atualizarProgresso();
+    }
+
+    function mostrarModalAntiPaste() {
+      document.getElementById('modal-anti-paste').classList.remove('hidden');
+    }
+
+    function fecharModalAntiPaste() {
+      document.getElementById('modal-anti-paste').classList.add('hidden');
+    }
+
+    function atualizarResultadoLive(input) {
+      if (atividadeFinalizada) return;
+      const previewDiv = input.parentElement.querySelector('.calc-preview');
+      if (!previewDiv) return;
+
+      const val = input.value.trim();
+      if (!val) { 
+        previewDiv.innerHTML = '<span class="text-slate-400">= R$ —</span>'; 
+        return; 
+      }
+
+      const res = avaliarExpressao(val);
+      if (res !== null) {
+        previewDiv.innerHTML = `<span class="bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded font-bold">= ${formatarMoeda(res)}</span>`;
+      } else {
+        previewDiv.innerHTML = `<span class="text-amber-600 text-[10px]">Digite valores numéricos</span>`;
+      }
+    }
+
+    function atualizarProgresso() {
+      const inputs = document.querySelectorAll('.sac-input');
+      let preenchidos = 0;
+      inputs.forEach(i => { if (i.value.trim() !== '') preenchidos++; });
+
+      const pct = totalLacunas > 0 ? Math.round((preenchidos / totalLacunas) * 100) : 0;
+      progressBar.style.width = `${pct}%`;
+      progressText.innerText = `${pct}% (${preenchidos}/${totalLacunas})`;
+
+      validarFormulario();
+    }
+
+    function validarFormulario() {
+      if (atividadeFinalizada) return;
+      const nomeOk = inputNome.value.trim().length >= 3;
+      const turmaOk = inputTurma.value.trim().length >= 1;
+      const grupoOk = selectGrupo.value !== "";
+
+      btnEnviar.disabled = !(nomeOk && turmaOk && grupoOk);
+    }
+
+    async function enviarAtividade() {
+      if (atividadeFinalizada) return;
+
+      const preenchidos = Array.from(document.querySelectorAll('.sac-input')).filter(i => i.value.trim() !== '').length;
+      if (preenchidos < totalLacunas) {
+        const confirmar = confirm(`Atenção: Você preencheu ${preenchidos} de ${totalLacunas} lacunas.\nCampos em branco serão contabilizados como incorretos.\n\nDeseja realmente finalizar e enviar agora?`);
+        if (!confirmar) return;
+      }
+
+      const nome = inputNome.value.trim();
+      const turma = inputTurma.value.trim();
+      const grupo = selectGrupo.value;
+      const grupoTurma = `${grupo} - ${turma}`;
+
+      let acertos = 0;
+
+      // Validação do Gabarito
+      document.querySelectorAll('.sac-input').forEach(input => {
+        const exId = input.getAttribute('data-ex');
+        const mesStr = input.getAttribute('data-mes');
+        const campo = input.getAttribute('data-campo');
+
+        const calculosEx = gabaritoMatematico[exId];
+        const valorDigitado = avaliarExpressao(input.value);
+
+        if (valorDigitado !== null) {
+          let valorEsperado = null;
+
+          if (mesStr === 'total') {
+            if (campo === 'totalAmortizacao') valorEsperado = calculosEx.totais.amortizacao;
+            if (campo === 'totalJuros') valorEsperado = calculosEx.totais.juros;
+            if (campo === 'totalPrestacao') valorEsperado = calculosEx.totais.prestacao;
+          } else {
+            const mes = parseInt(mesStr);
+            const linhaGabarito = calculosEx.linhas.find(l => l.mes === mes);
+            if (linhaGabarito) {
+              valorEsperado = linhaGabarito[campo];
+            }
+          }
+
+          if (valorEsperado !== null && Math.abs(valorDigitado - valorEsperado) <= 0.05) {
+            acertos++;
+          }
+        }
+      });
+
+      const notaPct = totalLacunas > 0 ? Math.round((acertos / totalLacunas) * 100) : 0;
+      const dataHora = new Date().toLocaleString('pt-BR');
+      const statusConclusao = notaPct >= 60 ? "Concluído com Sucesso" : "Concluído (Envio Parcial/Revisão)";
+
+      const payload = {
+        "Data/Hora": dataHora,
+        "Nome do Aluno": nome,
+        "Grupo/Turma": grupoTurma,
+        "Total de Campos": totalLacunas,
+        "Acertos Obtidos": acertos,
+        "Aproveitamento (%)": `${notaPct}%`,
+        "Status de Conclusão": statusConclusao
+      };
+
+      // Registra no navegador que o aluno já finalizou
+      localStorage.setItem(KEY_ENVIADO, JSON.stringify({
+        payload,
+        dataEnvio: dataHora
+      }));
+
+      bloquearAtividade({ payload, dataEnvio: dataHora });
+      bloquearCamposSemGabarito();
+
+      document.getElementById('res-nome-turma').innerText = `${nome} (${turma})`;
+      document.getElementById('res-grupo').innerText = `Grupo ${grupo}`;
+      document.getElementById('res-acertos').innerText = `${acertos} / ${totalLacunas}`;
+      document.getElementById('res-nota').innerText = `${notaPct}%`;
+      document.getElementById('modal-datahora').innerText = `Enviado em: ${dataHora}`;
+      document.getElementById('modal-resultado').classList.remove('hidden');
+
+      const statusMsg = document.getElementById('api-status-msg');
+      const spinner = document.getElementById('api-spinner');
+      spinner.classList.remove('hidden');
+
+      if (!URL_API || URL_API.includes("SUA_URL")) {
+        spinner.classList.add('hidden');
+        statusMsg.innerText = "ℹ️ Atividade finalizada localmente. (URL da API não configurada)";
+        statusMsg.className = "text-xs p-3 rounded-xl bg-amber-50 text-amber-700 border border-amber-200";
+      } else {
+        try {
+          await fetch(URL_API, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          spinner.classList.add('hidden');
+          statusMsg.innerText = "✅ Resposta gravada com sucesso na planilha!";
+          statusMsg.className = "text-xs p-3 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200";
+        } catch (err) {
+          spinner.classList.add('hidden');
+          statusMsg.innerText = "⚠️ Erro ao comunicar com o servidor da planilha.";
+          statusMsg.className = "text-xs p-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200";
+        }
+      }
+    }
+
+    function bloquearCamposSemGabarito() {
+      document.querySelectorAll('.sac-input').forEach(input => {
+        input.disabled = true;
+        input.classList.add('bg-slate-100', 'text-slate-500');
+        
+        const preview = input.parentElement.querySelector('.calc-preview');
+        if (preview) {
+          preview.innerHTML = '';
+        }
+      });
+    }
+
+    function bloquearAtividade(dadosRegistro) {
+      atividadeFinalizada = true;
+      inputNome.disabled = true;
+      inputTurma.disabled = true;
+      selectGrupo.disabled = true;
+      btnEnviar.disabled = true;
+      btnEnviar.innerText = "Atividade Já Finalizada";
+
+      if (dadosRegistro?.payload) {
+        inputNome.value = dadosRegistro.payload["Nome do Aluno"] || "";
+        const parts = (dadosRegistro.payload["Grupo/Turma"] || "").split(" - ");
+        if (parts.length > 1) {
+          selectGrupo.value = parts[0];
+          inputTurma.value = parts[1];
+        }
+      }
+
+      bannerBloqueio.classList.remove('hidden');
+    }
+
+    function fecharModal() {
+      document.getElementById('modal-resultado').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>

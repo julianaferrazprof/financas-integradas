@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Sistema Corporativo - Tabela de Financiamento Único</title>
+ <style>
+ :root {
+ --primary: #0f172a;
+ --secondary: #1e3a8a;
+ --accent: #2563eb;
+ --success: #16a34a;
+ --warning: #d97706;
+ --danger: #dc2626;
+ --excel-green-header: #dcfce7;
+ --formula-blue: #1d4ed8;
+ --bg: #f8fafc;
+ --card-bg: #ffffff;
+ --border: #cbd5e1;
+ --text: #0f172a;
+ }
+
+ body {
+ font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+ background-color: var(--bg);
+ margin: 0;
+ padding: 25px;
+ color: var(--text);
+ }
+
+ .container {
+ max-width: 1280px;
+ margin: 0 auto;
+ background: var(--card-bg);
+ padding: 30px;
+ border-radius: 12px;
+ box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+ border: 1px solid #e2e8f0;
+ position: relative;
+ }
+
+ .enterprise-header {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ border-bottom: 2px solid var(--border);
+ padding-bottom: 18px;
+ margin-bottom: 25px;
+ }
+
+ .enterprise-title {
+ display: flex;
+ align-items: center;
+ gap: 12px;
+ }
+
+ .enterprise-title h2 {
+ margin: 0;
+ font-size: 1.5rem;
+ color: var(--primary);
+ }
+
+ .student-info {
+ display: grid;
+ grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+ gap: 18px;
+ margin-bottom: 25px;
+ background: #f1f5f9;
+ padding: 20px;
+ border-radius: 8px;
+ border: 1px solid #e2e8f0;
+ }
+
+ .form-group {
+ display: flex;
+ flex-direction: column;
+ }
+
+ .form-group label {
+ font-size: 0.85rem;
+ font-weight: 700;
+ margin-bottom: 6px;
+ color: #475569;
+ display: flex;
+ align-items: center;
+ gap: 6px;
+ }
+
+ .form-group input, .form-group select {
+ padding: 10px 12px;
+ border: 1px solid var(--border);
+ border-radius: 6px;
+ font-size: 0.95rem;
+ transition: all 0.2s ease;
+ }
+
+ .form-group input:focus, .form-group select:focus {
+ outline: none;
+ border-color: var(--accent);
+ box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+ }
+
+ .dashboard {
+ background-color: #ffffff;
+ padding: 18px;
+ border-radius: 8px;
+ margin-bottom: 25px;
+ border: 1px solid #e2e8f0;
+ box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+ }
+
+ .progress-header {
+ display: flex;
+ justify-content: space-between;
+ font-weight: 700;
+ font-size: 0.95rem;
+ }
+
+ .progress-bar-bg {
+ background-color: #e2e8f0;
+ height: 18px;
+ border-radius: 9px;
+ overflow: hidden;
+ margin-top: 10px;
+ }
+
+ .progress-bar-fill {
+ background: linear-gradient(90deg, #2563eb, #16a34a);
+ height: 100%;
+ width: 0%;
+ transition: width 0.4s ease;
+ }
+
+ .congratulations-banner {
+ display: none;
+ background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+ border: 2px solid #22c55e;
+ border-radius: 10px;
+ padding: 20px;
+ margin-bottom: 25px;
+ text-align: center;
+ animation: fadeIn 0.5s ease-in-out;
+ }
+
+ .congratulations-banner h3 {
+ margin: 0 0 8px 0;
+ color: #15803d;
+ font-size: 1.3rem;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ gap: 10px;
+ }
+
+ .congratulations-banner p {
+ margin: 0;
+ color: #166534;
+ font-size: 0.98rem;
+ font-weight: 500;
+ }
+
+ .toast-warning {
+ display: none;
+ position: fixed;
+ bottom: 20px;
+ right: 20px;
+ background: #fef2f2;
+ border: 2px solid #ef4444;
+ color: #991b1b;
+ padding: 14px 20px;
+ border-radius: 8px;
+ font-weight: 700;
+ font-size: 0.9rem;
+ box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+ z-index: 9999;
+ animation: fadeIn 0.3s ease;
+ }
+
+ .tabs {
+ display: flex;
+ gap: 6px;
+ overflow-x: auto;
+ border-bottom: 2px solid var(--border);
+ padding-bottom: 8px;
+ margin-bottom: 20px;
+ }
+
+ .tab-btn {
+ padding: 8px 16px;
+ border: 1px solid var(--border);
+ background: #ffffff;
+ cursor: pointer;
+ border-radius: 6px 6px 0 0;
+ white-space: nowrap;
+ font-weight: 600;
+ color: #64748b;
+ transition: all 0.2s;
+ display: flex;
+ align-items: center;
+ gap: 6px;
+ }
+
+ .tab-btn:hover {
+ background: #f1f5f9;
+ color: var(--primary);
+ }
+
+ .tab-btn.active {
+ background: var(--secondary);
+ color: white;
+ border-color: var(--secondary);
+ }
+
+ .tab-btn.completed {
+ border-bottom: 2px solid #16a34a;
+ }
+
+ .exercise-cards {
+ display: grid;
+ grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+ gap: 15px;
+ margin-bottom: 25px;
+ }
+
+ .card-info {
+ background: #ffffff;
+ border: 1px solid #e2e8f0;
+ border-left: 4px solid var(--accent);
+ padding: 14px 18px;
+ border-radius: 8px;
+ box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+ }
+
+ .card-info .label {
+ font-size: 0.8rem;
+ color: #64748b;
+ font-weight: 700;
+ text-transform: uppercase;
+ margin-bottom: 4px;
+ }
+
+ .card-info .value {
+ font-size: 1.25rem;
+ font-weight: 800;
+ color: var(--primary);
+ }
+
+ table.excel-table {
+ width: 100%;
+ border-collapse: collapse;
+ margin-bottom: 25px;
+ background: #ffffff;
+ border-radius: 8px;
+ overflow: hidden;
+ box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+ }
+
+ table.excel-table th, table.excel-table td {
+ border: 1px solid var(--border);
+ padding: 8px 10px;
+ text-align: center;
+ font-size: 0.9rem;
+ vertical-align: middle;
+ }
+
+ table.excel-table th.main-title {
+ background-color: var(--excel-green-header);
+ color: #064e3b;
+ font-weight: 800;
+ font-size: 1.05rem;
+ letter-spacing: 0.5px;
+ }
+
+ table.excel-table th.formula-header {
+ background-color: #f0fdf4;
+ color: var(--formula-blue);
+ font-weight: 600;
+ font-size: 0.82rem;
+ padding: 10px 8px;
+ vertical-align: middle;
+ line-height: 1.3;
+ }
+
+ table.excel-table th.col-header {
+ background-color: #f8fafc;
+ color: #334155;
+ font-weight: 700;
+ font-size: 0.88rem;
+ }
+
+ input.table-input {
+ width: 95%;
+ padding: 8px;
+ text-align: right;
+ border: 1px solid #cbd5e1;
+ border-radius: 4px;
+ font-size: 0.88rem;
+ font-family: 'Consolas', monospace;
+ transition: all 0.2s;
+ box-sizing: border-box;
+ }
+
+ input.table-input::placeholder {
+ color: #94a3b8;
+ font-style: italic;
+ font-size: 0.8rem;
+ text-align: center;
+ }
+
+ input.table-input:focus {
+ outline: none;
+ border-color: var(--accent);
+ background-color: #eff6ff;
+ box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+ }
+
+ input.table-input.readonly-fixed {
+ background-color: #f1f5f9;
+ color: #334155;
+ font-weight: 600;
+ border-color: #e2e8f0;
+ cursor: not-allowed;
+ }
+
+ input.table-input.calculated-success {
+ border-color: #22c55e;
+ background-color: #f0fdf4;
+ }
+
+ tr.calc-feedback-row {
+ background-color: #faf5ff;
+ }
+
+ tr.calc-feedback-row td {
+ padding: 4px 6px;
+ border-top: none;
+ border-bottom: 1px solid #e9d5ff;
+ font-size: 0.78rem;
+ font-weight: 700;
+ color: #6b21a8;
+ height: 20px;
+ }
+
+ .sub-feedback-box {
+ display: inline-block;
+ background-color: #f3e8ff;
+ color: #581c87;
+ padding: 2px 8px;
+ border-radius: 4px;
+ border: 1px solid #d8b4fe;
+ font-family: 'Consolas', monospace;
+ animation: fadeIn 0.3s ease;
+ }
+
+ tr.totais-row td {
+ font-weight: 800;
+ background-color: #f8fafc;
+ color: var(--primary);
+ }
+
+ .actions {
+ display: flex;
+ gap: 10px;
+ flex-wrap: wrap;
+ justify-content: flex-end;
+ }
+
+ button.btn {
+ padding: 12px 20px;
+ border: none;
+ border-radius: 6px;
+ cursor: pointer;
+ font-weight: 700;
+ font-size: 0.88rem;
+ display: flex;
+ align-items: center;
+ gap: 8px;
+ transition: all 0.2s ease;
+ }
+
+ .btn-draft { background-color: #d97706; color: white; }
+ .btn-draft:hover { background-color: #b45309; }
+ 
+ .btn-download { background-color: #0284c7; color: white; }
+ .btn-download:hover { background-color: #0369a1; }
+ 
+ .btn-load { background-color: #475569; color: white; }
+ .btn-load:hover { background-color: #334155; }
+ 
+ .btn-submit { background-color: #16a34a; color: white; }
+ .btn-submit:hover { background-color: #15803d; }
+ 
+ .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+ .status-badge {
+ display: inline-flex;
+ align-items: center;
+ gap: 6px;
+ padding: 6px 14px;
+ border-radius: 20px;
+ font-size: 0.85rem;
+ font-weight: 700;
+ }
+ .status-open { background-color: #dbeafe; color: #1e40af; }
+ .status-locked { background-color: #fee2e2; color: #991b1b; }
+
+ @keyframes fadeIn {
+ from { opacity: 0; transform: translateY(-4px); }
+ to { opacity: 1; transform: translateY(0); }
+ }
+ </style>
+</head>
+<body>
+
+<div class="container">
+ <div class="enterprise-header">
+ <div class="enterprise-title">
+ <span style="font-size: 1.8rem;">🏢</span>
+ <div>
+ <h2>Módulo de Financiamento - ERP Corporativo</h2>
+ <span style="font-size: 0.85rem; color: #64748b;">Simulador de Financiamento Único</span>
+ </div>
+ </div>
+ <span id="status-badge" class="status-badge status-open">
+ <span style="font-size: 0.7rem;">🟢</span> <span id="status-text">Sistema Aberto</span><span id="save-status"></span>
+ </span>
+ </div>
+
+ <!-- Informações do Estudante -->
+ <div class="student-info">
+ <div class="form-group">
+ <label for="student-name">👤 Nome Completo do Aluno:</label>
+ <input type="text" id="student-name" placeholder="Digite seu nome completo">
+ </div>
+ <div class="form-group">
+ <label for="student-id">🆔 Matrícula / Registro:</label>
+ <input type="text" id="student-id" placeholder="Digite sua matrícula">
+ </div>
+ <div class="form-group">
+ <label for="student-group">👥 Grupo de Trabalho:</label>
+ <select id="student-group" onchange="changeGroup()">
+ <option value="ALFA">Grupo Alfa (20 Exercícios)</option>
+ <option value="BETA">Grupo Beta (20 Exercícios)</option>
+ <option value="GAMA">Grupo Gama (15 Exercícios)</option>
+ <option value="DELTA">Grupo Delta (15 Exercícios)</option>
+ </select>
+ </div>
+ </div>
+
+ <!-- Barra de Progresso -->
+ <div class="dashboard">
+ <div class="progress-header">
+ <span>📊 Progresso do Grupo Atual:</span>
+ <span id="progress-text">0%</span>
+ </div>
+ <div class="progress-bar-bg">
+ <div id="progress-bar" class="progress-bar-fill"></div>
+ </div>
+ </div>
+
+ <!-- Banner de Parabenização -->
+ <div id="congratulations-banner" class="congratulations-banner">
+ <h3>🏆 Parabéns pelo Excelente Desempenho!</h3>
+ <p>Você atingiu 100% de aproveitamento neste grupo de atividades! Seu esforço e dedicação demonstram alto compromisso com a aprendizagem.</p>
+ </div>
+
+ <!-- Toast de Bloqueio de Copiar/Colar -->
+ <div id="toast-warning" class="toast-warning">
+ ⚠️ Digitação manual obrigatória! A função de copiar e colar está desativada.
+ </div>
+
+ <!-- Abas dos Exercícios -->
+ <div class="tabs" id="tabs-container"></div>
+
+ <!-- Cards de Resumo dos Dados do Exercício -->
+ <div class="exercise-cards">
+ <div class="card-info">
+ <div class="label">💰 Saldo Devedor Inicial</div>
+ <div class="value" id="display-pv">R$ 0,00</div>
+ </div>
+ <div class="card-info" style="border-left-color: #10b981;">
+ <div class="label">📈 Taxa de Juros ao Mês</div>
+ <div class="value" id="display-rate">0,00%</div>
+ </div>
+ <div class="card-info" style="border-left-color: #8b5cf6;">
+ <div class="label">📅 Prazo (Meses)</div>
+ <div class="value" id="display-months">0</div>
+ </div>
+ </div>
+
+ <!-- Tabela Estilo Planilha / ERP -->
+ <table class="excel-table">
+ <thead>
+ <tr>
+ <th colspan="2" class="main-title">TABELA DE FINANCIAMENTO ÚNICO</th>
+ <th class="formula-header">= Saldo devedor inicial * taxa</th>
+ <th class="formula-header">(SOMA dos juros acumulados + saldo devedor inicial) apenas na última parcela</th>
+ <th class="formula-header">= Saldo devedor inicial + total de juros do mês - pagamento da parcela (Apenas na última parcela)</th>
+ </tr>
+ <tr>
+ <th class="col-header" style="width: 10%;">Período (Mês)</th>
+ <th class="col-header" style="width: 22.5%;">Saldo Devedor Inicial</th>
+ <th class="col-header" style="width: 22.5%;">Juros Acumulados no Mês</th>
+ <th class="col-header" style="width: 22.5%;">Pagamento Parcela</th>
+ <th class="col-header" style="width: 22.5%;">Saldo Devedor Final</th>
+ </tr>
+ </thead>
+ <tbody id="table-body">
+ </tbody>
+ <tfoot>
+ <tr class="totais-row">
+ <td style="text-align: left; padding-left: 12px;">∑ Totais</td>
+ <td></td>
+ <td><input type="text" class="table-input readonly-fixed" id="total-juros" readonly placeholder="Soma automática"></td>
+ <td><input type="text" class="table-input readonly-fixed" id="total-pagto" readonly placeholder="Repete última parcela"></td>
+ <td></td>
+ </tr>
+ </tfoot>
+ </table>
+
+ <!-- Ações e Gerenciamento de Rascunho -->
+ <div class="actions">
+ <button class="btn btn-draft" id="btn-save" onclick="saveDraftNav()">💾 Salvar Navegador</button>
+ <button class="btn btn-download" id="btn-download" onclick="downloadDraftFile()">📥 Baixar Arquivo Rascunho</button>
+ <button class="btn btn-load" id="btn-load-file" onclick="triggerFileUpload()">📂 Carregar Arquivo Rascunho</button>
+ <button class="btn btn-submit" id="btn-send" onclick="submitToTeacher()">🚀 Enviar ao Professor</button>
+ </div>
+</div>
+
+<!-- Elemento oculto para upload de arquivo JSON -->
+<input type="file" id="draft-file-input" accept=".json" style="display:none;" onchange="loadDraftFromFile(event)">
+
+<script>
+ const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxY2WFoKk051uAjhieX_UIYygWDbbgXf9Nke99eQCCOGSZ_LQX15zVImb9VIKNw6f8/exec";
+
+ let currentGroup = "ALFA";
+ let currentTab = 1;
+ let isLocked = false;
+ let formData = {};
+
+ const exerciseDatabase = {
+ "ALFA": [
+ { pv: 10000, rate: 0.015, months: 6 },
+ { pv: 12000, rate: 0.020, months: 8 },
+ { pv: 15000, rate: 0.025, months: 10 },
+ { pv: 18000, rate: 0.030, months: 12 },
+ { pv: 20000, rate: 0.018, months: 5 },
+ { pv: 22000, rate: 0.022, months: 7 },
+ { pv: 25000, rate: 0.028, months: 9 },
+ { pv: 28000, rate: 0.032, months: 11 },
+ { pv: 30000, rate: 0.035, months: 6 },
+ { pv: 35000, rate: 0.040, months: 8 },
+ { pv: 40000, rate: 0.012, months: 10 },
+ { pv: 45000, rate: 0.024, months: 12 },
+ { pv: 50000, rate: 0.026, months: 6 },
+ { pv: 60000, rate: 0.038, months: 8 },
+ { pv: 70000, rate: 0.045, months: 10 },
+ { pv: 75000, rate: 0.016, months: 12 },
+ { pv: 80000, rate: 0.021, months: 5 },
+ { pv: 85000, rate: 0.027, months: 8 },
+ { pv: 90000, rate: 0.031, months: 10 },
+ { pv: 100000, rate: 0.036, months: 12 }
+ ],
+ "BETA": [
+ { pv: 8000, rate: 0.012, months: 5 },
+ { pv: 11000, rate: 0.018, months: 6 },
+ { pv: 14000, rate: 0.021, months: 8 },
+ { pv: 16000, rate: 0.025, months: 9 },
+ { pv: 19000, rate: 0.029, months: 10 },
+ { pv: 21000, rate: 0.033, months: 12 },
+ { pv: 24000, rate: 0.015, months: 6 },
+ { pv: 27000, rate: 0.022, months: 8 },
+ { pv: 32000, rate: 0.026, months: 10 },
+ { pv: 38000, rate: 0.031, months: 12 },
+ { pv: 42000, rate: 0.037, months: 6 },
+ { pv: 48000, rate: 0.042, months: 8 },
+ { pv: 52000, rate: 0.017, months: 10 },
+ { pv: 58000, rate: 0.023, months: 12 },
+ { pv: 64000, rate: 0.028, months: 5 },
+ { pv: 72000, rate: 0.034, months: 7 },
+ { pv: 82000, rate: 0.039, months: 9 },
+ { pv: 88000, rate: 0.044, months: 11 },
+ { pv: 95000, rate: 0.020, months: 6 },
+ { pv: 110000, rate: 0.030, months: 12 }
+ ],
+ "GAMA": [
+ { pv: 9000, rate: 0.014, months: 4 },
+ { pv: 13000, rate: 0.019, months: 6 },
+ { pv: 17000, rate: 0.023, months: 8 },
+ { pv: 23000, rate: 0.027, months: 10 },
+ { pv: 29000, rate: 0.032, months: 12 },
+ { pv: 34000, rate: 0.016, months: 5 },
+ { pv: 39000, rate: 0.024, months: 7 },
+ { pv: 46000, rate: 0.029, months: 9 },
+ { pv: 54000, rate: 0.035, months: 11 },
+ { pv: 62000, rate: 0.041, months: 6 },
+ { pv: 68000, rate: 0.018, months: 8 },
+ { pv: 76000, rate: 0.025, months: 10 },
+ { pv: 84000, rate: 0.033, months: 12 },
+ { pv: 92000, rate: 0.038, months: 6 },
+ { pv: 105000, rate: 0.043, months: 12 }
+ ],
+ "DELTA": [
+ { pv: 10500, rate: 0.013, months: 6 },
+ { pv: 14500, rate: 0.017, months: 8 },
+ { pv: 18500, rate: 0.022, months: 9 },
+ { pv: 26000, rate: 0.026, months: 10 },
+ { pv: 31000, rate: 0.030, months: 12 },
+ { pv: 36000, rate: 0.034, months: 6 },
+ { pv: 41000, rate: 0.019, months: 8 },
+ { pv: 49000, rate: 0.028, months: 10 },
+ { pv: 56000, rate: 0.036, months: 12 },
+ { pv: 63000, rate: 0.040, months: 6 },
+ { pv: 71000, rate: 0.015, months: 8 },
+ { pv: 79000, rate: 0.023, months: 10 },
+ { pv: 87000, rate: 0.031, months: 12 },
+ { pv: 96000, rate: 0.037, months: 9 },
+ { pv: 120000, rate: 0.045, months: 12 }
+ ]
+ };
+
+ function init() {
+  // Configura bloqueio de copiar e colar global para os inputs do sistema
+  document.addEventListener('paste', handleAntiCopyPaste);
+  document.addEventListener('copy', handleAntiCopyPaste);
+  document.addEventListener('cut', handleAntiCopyPaste);
+  document.addEventListener('drop', handleAntiCopyPaste);
+
+  const saved = localStorage.getItem("financiamento_rascunho_v8");
+  if (saved) {
+    try {
+      const payload = JSON.parse(saved);
+      document.getElementById("student-name").value = payload.studentName || "";
+      document.getElementById("student-id").value = payload.studentId || "";
+      document.getElementById("student-group").value = payload.group || "ALFA";
+      currentGroup = payload.group || "ALFA";
+      currentTab = payload.currentTab || 1;
+      formData = payload.formData || {};
+      isLocked = payload.isLocked || false;
+    } catch(e) {
+      console.error("Erro ao carregar rascunho automático:", e);
+    }
+  }
+
+  document.getElementById("student-name").addEventListener("input", saveDraftSilent);
+  document.getElementById("student-id").addEventListener("input", saveDraftSilent);
+
+  renderTabs();
+  loadExercise(currentTab);
+  updateProgress();
+
+  if (isLocked) applyLock();
+ }
+
+ function handleAntiCopyPaste(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+    e.preventDefault();
+    const toast = document.getElementById("toast-warning");
+    toast.style.display = "block";
+    setTimeout(() => { toast.style.display = "none"; }, 3500);
+    return false;
+  }
+ }
+
+ function getExerciseConfig(group, tabIndex) {
+  const list = exerciseDatabase[group];
+  const index = Math.max(0, Math.min(tabIndex - 1, list.length - 1));
+  return list[index];
+ }
+
+ function changeGroup() {
+  saveCurrentTableState();
+  currentGroup = document.getElementById("student-group").value;
+  currentTab = 1;
+  renderTabs();
+  loadExercise(1);
+  updateProgress();
+  saveDraftSilent();
+ }
+
+ function isExerciseComplete(group, tabIndex) {
+  const config = getExerciseConfig(group, tabIndex);
+  const key = `${group}_Ex_${tabIndex}`;
+  const exData = formData[key] || {};
+  const months = config.months;
+
+  for (let t = 1; t <= months; t++) {
+    if (!exData[`${t}_juros`] || exData[`${t}_juros`].trim() === "") return false;
+  }
+  if (!exData[`${months}_pagto`] || exData[`${months}_pagto`].trim() === "") return false;
+  if (!exData[`${months}_sd_fim`] || exData[`${months}_sd_fim`].trim() === "") return false;
+
+  return true;
+ }
+
+ function renderTabs() {
+  const tabsContainer = document.getElementById("tabs-container");
+  tabsContainer.innerHTML = "";
+  const total = exerciseDatabase[currentGroup].length;
+
+  for (let i = 1; i <= total; i++) {
+    const isDone = isExerciseComplete(currentGroup, i);
+    const btn = document.createElement("button");
+    btn.className = `tab-btn ${i === currentTab ? 'active' : ''} ${isDone ? 'completed' : ''}`;
+    btn.innerHTML = `Exercício ${i} ${isDone ? '<span style="color:#16a34a; font-weight: bold;">✓</span>' : ''}`;
+    btn.onclick = () => switchTab(i);
+    tabsContainer.appendChild(btn);
+  }
+ }
+
+ function switchTab(tabIndex) {
+  saveCurrentTableState();
+  currentTab = tabIndex;
+  renderTabs();
+  loadExercise(tabIndex);
+  updateProgress();
+  saveDraftSilent();
+ }
+
+ function formatBRL(value) {
+  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+ }
+
+ function escapeHtml(str) {
+  if (!str) return '';
+  return str.toString()
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+ }
+
+ function loadExercise(tabIndex) {
+  const config = getExerciseConfig(currentGroup, tabIndex);
+  const formattedPV = formatBRL(config.pv);
+
+  document.getElementById("display-pv").innerText = formattedPV;
+  document.getElementById("display-rate").innerText = `${(config.rate * 100).toFixed(2).replace('.', ',')}%`;
+  document.getElementById("display-months").innerText = config.months;
+
+  const tbody = document.getElementById("table-body");
+  tbody.innerHTML = "";
+
+  const key = `${currentGroup}_Ex_${tabIndex}`;
+  const savedData = formData[key] || {};
+
+  for (let t = 1; t <= config.months; t++) {
+    const isLastMonth = (t === config.months);
+
+    const sdInitValue = formattedPV;
+    const jurosValue = savedData[`${t}_juros`] !== undefined ? savedData[`${t}_juros`] : '';
+    const pagtoValue = isLastMonth ? (savedData[`${t}_pagto`] !== undefined ? savedData[`${t}_pagto`] : '') : 'R$ 0,00';
+    const pagtoReadOnly = !isLastMonth;
+
+    const sdFimValue = isLastMonth ? (savedData[`${t}_sd_fim`] !== undefined ? savedData[`${t}_sd_fim`] : '') : formattedPV;
+    const sdFimReadOnly = !isLastMonth;
+
+    const jurosPlaceholder = "Ex: 10000 * 0.015";
+    const pagtoPlaceholder = isLastMonth ? "Ex: 10000 + total" : "";
+    const sdFimPlaceholder = isLastMonth ? "Ex: saldo + juros - pagto" : "";
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="font-weight: bold; background-color: #f8fafc;">Mês ${t}</td>
+      <td>
+        <input type="text" class="table-input readonly-fixed" data-row="${t}" data-col="sd_init" value="${sdInitValue}" readonly>
+      </td>
+      <td>
+        <input type="text" class="table-input" data-row="${t}" data-col="juros" value="${escapeHtml(jurosValue)}" oninput="handleCellInput(this)" onkeydown="handleKeyDown(event, this)" placeholder="${jurosPlaceholder}" ${isLocked ? 'disabled' : ''}>
+      </td>
+      <td>
+        <input type="text" class="table-input ${pagtoReadOnly ? 'readonly-fixed' : ''}" data-row="${t}" data-col="pagto" value="${escapeHtml(pagtoValue)}" ${pagtoReadOnly || isLocked ? 'readonly' : ''} oninput="handleCellInput(this)" onkeydown="handleKeyDown(event, this)" placeholder="${pagtoPlaceholder}">
+      </td>
+      <td>
+        <input type="text" class="table-input ${sdFimReadOnly ? 'readonly-fixed' : ''}" data-row="${t}" data-col="sd_fim" value="${escapeHtml(sdFimValue)}" ${sdFimReadOnly || isLocked ? 'readonly' : ''} oninput="handleCellInput(this)" onkeydown="handleKeyDown(event, this)" placeholder="${sdFimPlaceholder}">
+      </td>
+    `;
+    tbody.appendChild(tr);
+
+    const trFeedback = document.createElement("tr");
+    trFeedback.className = "calc-feedback-row";
+    trFeedback.id = `fb-row-${t}`;
+    trFeedback.innerHTML = `
+      <td></td>
+      <td id="fb-cell-${t}-sd_init"></td>
+      <td id="fb-cell-${t}-juros"></td>
+      <td id="fb-cell-${t}-pagto"></td>
+      <td id="fb-cell-${t}-sd_fim"></td>
+    `;
+    tbody.appendChild(trFeedback);
+  }
+
+  for (let t = 1; t <= config.months; t++) {
+    const isLastMonth = (t === config.months);
+    const colsToEvaluate = isLastMonth ? ['juros', 'pagto', 'sd_fim'] : ['juros'];
+
+    colsToEvaluate.forEach(col => {
+      const valStr = savedData[`${t}_${col}`];
+      if (valStr && valStr.trim() !== '') {
+        const evalVal = evaluateMathExpression(valStr, config);
+        if (evalVal !== null) {
+          showSubFeedbackCell(t, col, evalVal);
+          const inputEl = document.querySelector(`input[data-row="${t}"][data-col="${col}"]`);
+          if (inputEl) inputEl.classList.add("calculated-success");
+        }
+      }
+    });
+  }
+
+  recalculateTotals();
+  if (isLocked) applyLock();
+ }
+
+ function evaluateMathExpression(expr, config) {
+  if (!expr) return null;
+  let clean = expr.toString().toLowerCase();
+
+  clean = clean.replace(/r\$/g, '').replace(/^=/, '').trim();
+
+  if (config) {
+    clean = clean.replace(/saldo\s*devedor\s*inicial/g, config.pv);
+    clean = clean.replace(/\bpv\b/g, config.pv);
+    clean = clean.replace(/taxa\s*de\s*juros/g, config.rate);
+    clean = clean.replace(/\btaxa\b/g, config.rate);
+    clean = clean.replace(/\brate\b/g, config.rate);
+  }
+
+  clean = clean.replace(/(\d+)\.(\d{3})/g, '$1$2');
+  clean = clean.replace(/,/g, '.');
+  clean = clean.replace(/(\d+[\.]?\d*)\%/g, "($1/100)");
+  clean = clean.replace(/\s+/g, '');
+
+  try {
+    if (/[^0-9\+\-\*\/\(\)\.]/.test(clean)) return null;
+    const result = Function(`'use strict'; return (${clean})`)();
+    if (typeof result === 'number' && !isNaN(result) && isFinite(result)) {
+      return result;
+    }
+  } catch (e) {
+    return null;
+  }
+  return null;
+ }
+
+ function handleCellInput(element) {
+  const rawVal = element.value;
+  const row = element.getAttribute("data-row");
+  const col = element.getAttribute("data-col");
+  const config = getExerciseConfig(currentGroup, currentTab);
+
+  const key = `${currentGroup}_Ex_${currentTab}`;
+  if (!formData[key]) formData[key] = {};
+  formData[key][`${row}_${col}`] = rawVal;
+
+  if (rawVal.trim() !== "") {
+    const evaluated = evaluateMathExpression(rawVal, config);
+    if (evaluated !== null) {
+      showSubFeedbackCell(row, col, evaluated);
+      element.classList.add("calculated-success");
+    } else {
+      clearSubFeedbackCell(row, col);
+      element.classList.remove("calculated-success");
+    }
+  } else {
+    clearSubFeedbackCell(row, col);
+    element.classList.remove("calculated-success");
+  }
+
+  recalculateTotals();
+  saveDraftSilent();
+  updateProgress();
+  renderTabs();
+ }
+
+ function handleKeyDown(event, element) {
+  if (event.key === "Enter" || event.key === "Tab") {
+    const rawVal = element.value;
+    const config = getExerciseConfig(currentGroup, currentTab);
+    const evaluated = evaluateMathExpression(rawVal, config);
+
+    const row = element.getAttribute("data-row");
+    const col = element.getAttribute("data-col");
+
+    if (evaluated !== null && rawVal.trim() !== "") {
+      element.classList.add("calculated-success");
+      showSubFeedbackCell(row, col, evaluated);
+    }
+
+    recalculateTotals();
+    saveDraftSilent();
+    updateProgress();
+    renderTabs();
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      focusNextEditableInput(element);
+    }
+  }
+ }
+
+ function showSubFeedbackCell(row, col, value) {
+  const key = `${currentGroup}_Ex_${currentTab}`;
+  if (!formData[key]) formData[key] = {};
+
+  const cellId = `fb-cell-${row}-${col}`;
+  const targetCell = document.getElementById(cellId);
+
+  const htmlContent = `<span class="sub-feedback-box">= ${formatBRL(value)}</span>`;
+  if (targetCell) {
+    targetCell.innerHTML = htmlContent;
+  }
+  formData[key][`${row}_fb_${col}`] = htmlContent;
+ }
+
+ function clearSubFeedbackCell(row, col) {
+  const key = `${currentGroup}_Ex_${currentTab}`;
+  const cellId = `fb-cell-${row}-${col}`;
+  const targetCell = document.getElementById(cellId);
+  if (targetCell) targetCell.innerHTML = "";
+  if (formData[key]) delete formData[key][`${row}_fb_${col}`];
+ }
+
+ function focusNextEditableInput(currentElement) {
+  const inputs = Array.from(document.querySelectorAll("input.table-input:not([readonly])"));
+  const currentIndex = inputs.indexOf(currentElement);
+  if (currentIndex > -1 && currentIndex < inputs.length - 1) {
+    inputs[currentIndex + 1].focus();
+  }
+ }
+
+ function recalculateTotals() {
+  const config = getExerciseConfig(currentGroup, currentTab);
+  let totalJuros = 0;
+
+  const jurosInputs = document.querySelectorAll(`input[data-col="juros"]`);
+  jurosInputs.forEach(input => {
+    const val = evaluateMathExpression(input.value, config);
+    if (val !== null) {
+      totalJuros += val;
+    }
+  });
+
+  const lastMonthPagtoInput = document.querySelector(`input[data-row="${config.months}"][data-col="pagto"]`);
+  let lastPagtoVal = 0;
+  if (lastMonthPagtoInput) {
+    const evalPagto = evaluateMathExpression(lastMonthPagtoInput.value, config);
+    if (evalPagto !== null) {
+      lastPagtoVal = evalPagto;
+    }
+  }
+
+  const totalJurosEl = document.getElementById("total-juros");
+  const totalPagtoEl = document.getElementById("total-pagto");
+
+  if (totalJurosEl) {
+    totalJurosEl.value = totalJuros > 0 ? formatBRL(totalJuros) : '';
+  }
+  if (totalPagtoEl) {
+    totalPagtoEl.value = lastPagtoVal > 0 ? formatBRL(lastPagtoVal) : '';
+  }
+ }
+
+ function saveCurrentTableState() {
+  const key = `${currentGroup}_Ex_${currentTab}`;
+  if (!formData[key]) formData[key] = {};
+
+  const inputs = document.querySelectorAll("input.table-input:not([readonly])");
+  inputs.forEach(input => {
+    const row = input.getAttribute("data-row");
+    const col = input.getAttribute("data-col");
+    if (row && col) {
+      formData[key][`${row}_${col}`] = input.value;
+    }
+  });
+ }
+
+ function updateProgress() {
+  saveCurrentTableState();
+  let totalRequiredFields = 0;
+  let filledFields = 0;
+
+  const totalEx = exerciseDatabase[currentGroup].length;
+
+  for (let ex = 1; ex <= totalEx; ex++) {
+    const config = getExerciseConfig(currentGroup, ex);
+    const months = config.months;
+    const fieldsPerEx = months + 2; 
+    totalRequiredFields += fieldsPerEx;
+
+    const key = `${currentGroup}_Ex_${ex}`;
+    const exData = formData[key] || {};
+    
+    for (let t = 1; t <= months; t++) {
+      if (exData[`${t}_juros`] && exData[`${t}_juros`].trim() !== "") {
+        filledFields++;
+      }
+    }
+    if (exData[`${months}_pagto`] && exData[`${months}_pagto`].trim() !== "") {
+      filledFields++;
+    }
+    if (exData[`${months}_sd_fim`] && exData[`${months}_sd_fim`].trim() !== "") {
+      filledFields++;
+    }
+  }
+
+  const percentage = Math.min(100, Math.round((filledFields / totalRequiredFields) * 100));
+  document.getElementById("progress-bar").style.width = percentage + "%";
+  document.getElementById("progress-text").innerText = percentage + "%";
+
+  const congratulationsBanner = document.getElementById("congratulations-banner");
+  if (percentage === 100) {
+    congratulationsBanner.style.display = "block";
+  } else {
+    congratulationsBanner.style.display = "none";
+  }
+
+  return percentage;
+ }
+
+ function saveDraftSilent() {
+  saveCurrentTableState();
+  const payload = {
+    studentName: document.getElementById("student-name").value,
+    studentId: document.getElementById("student-id").value,
+    group: currentGroup,
+    currentTab: currentTab,
+    formData: formData,
+    isLocked: isLocked,
+    lastSaved: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  };
+  localStorage.setItem("financiamento_rascunho_v8", JSON.stringify(payload));
+  const saveStatus = document.getElementById("save-status");
+  if (saveStatus) {
+    saveStatus.innerText = ` • Salvo no navegador às ${payload.lastSaved}`;
+  }
+ }
+
+ function saveDraftNav() {
+  saveDraftSilent();
+  alert("💾 Rascunho salvo com sucesso no navegador!");
+ }
+
+ function downloadDraftFile() {
+  saveCurrentTableState();
+  const name = document.getElementById("student-name").value.trim() || "aluno";
+  const payload = {
+    studentName: document.getElementById("student-name").value,
+    studentId: document.getElementById("student-id").value,
+    group: currentGroup,
+    currentTab: currentTab,
+    formData: formData,
+    isLocked: isLocked,
+    downloadedAt: new Date().toISOString()
+  };
+  
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+  const downloadAnchor = document.createElement('a');
+  const safeName = name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+  downloadAnchor.setAttribute("href", dataStr);
+  downloadAnchor.setAttribute("download", `rascunho_${safeName}_${currentGroup}.json`);
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+ }
+
+ function triggerFileUpload() {
+  document.getElementById("draft-file-input").click();
+ }
+
+ function loadDraftFromFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const payload = JSON.parse(e.target.result);
+      if (!payload.formData) throw new Error("Estrutura inválida");
+
+      document.getElementById("student-name").value = payload.studentName || "";
+      document.getElementById("student-id").value = payload.studentId || "";
+      document.getElementById("student-group").value = payload.group || "ALFA";
+      currentGroup = payload.group || "ALFA";
+      currentTab = payload.currentTab || 1;
+      formData = payload.formData || {};
+      isLocked = payload.isLocked || false;
+
+      renderTabs();
+      loadExercise(currentTab);
+      updateProgress();
+
+      if (isLocked) applyLock();
+      alert("📂 Arquivo de rascunho carregado com sucesso!");
+    } catch (err) {
+      alert("⚠️ Erro ao ler o arquivo de rascunho. Certifique-se de que é um arquivo JSON válido exportado por este sistema.");
+    }
+  };
+  reader.readAsText(file);
+ }
+
+ function applyLock() {
+  isLocked = true;
+  document.querySelectorAll("input, select, button.btn-draft, button.btn-download, button.btn-submit").forEach(el => {
+    if (el.id !== "btn-load-file") el.disabled = true;
+  });
+  const badge = document.getElementById("status-badge");
+  badge.className = "status-badge status-locked";
+  badge.innerHTML = `<span style="font-size: 0.7rem;">🔒</span> Sistema Bloqueado (Enviado)`;
+ }
+
+ async function submitToTeacher() {
+  const name = document.getElementById("student-name").value.trim();
+  const id = document.getElementById("student-id").value.trim();
+
+  if (!name || !id) {
+    alert("Por favor, preencha o Nome Completo e a Matrícula antes de enviar.");
+    return;
+  }
+
+  if (!confirm("Tem certeza que deseja enviar a atividade ao professor? O sistema será bloqueado para edições após o envio.")) {
+    return;
+  }
+
+  saveCurrentTableState();
+  const progress = updateProgress();
+  const payload = {
+    studentName: name,
+    studentId: id,
+    group: currentGroup,
+    progress: progress,
+    answers: formData,
+    submittedAt: new Date().toISOString()
+  };
+
+  try {
+    document.getElementById("btn-send").innerText = "Enviando...";
+    document.getElementById("btn-send").disabled = true;
+
+    await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    applyLock();
+    saveDraftSilent();
+    alert("🚀 Atividade enviada com sucesso ao professor! As respostas foram registradas na planilha.");
+  } catch (error) {
+    alert("Erro ao enviar. Verifique sua conexão e tente novamente.");
+    document.getElementById("btn-send").innerText = "🚀 Enviar ao Professor";
+    document.getElementById("btn-send").disabled = false;
+  }
+ }
+
+ window.onload = init;
+</script>
+</body>
+</html>

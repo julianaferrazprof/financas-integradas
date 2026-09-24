@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Financiamento - SAM</title>
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --primary-dark: #1557b0;
+            --secondary: #5f6368;
+            --secondary-dark: #3c4043;
+            --success: #34a853;
+            --success-bg: #e6f4ea;
+            --danger: #d93025;
+            --danger-bg: #fce8e6;
+            --bg: #f8f9fa;
+            --border: #dadce0;
+            --text: #202124;
+            --price-color: #7c3aed;
+            --sac-color: #2563eb;
+            --sam-color: #059669;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: var(--text); }
+        .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: var(--text); margin-top: 0; }
+        .student-info { background: #f1f3f4; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap; }
+        .student-info div { display: flex; flex-direction: column; flex: 1; min-width: 200px; }
+        .student-info label { font-size: 13px; font-weight: bold; margin-bottom: 4px; }
+        .student-info input { padding: 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 14px; }
+        .header-panel { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
+        .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        select, button { padding: 8px 12px; border-radius: 4px; border: 1px solid var(--border); font-size: 14px; cursor: pointer; }
+        button { background: var(--primary); color: white; border: none; font-weight: bold; transition: background 0.2s; }
+        button:hover { background: var(--primary-dark); }
+        button:disabled { background: #dadce0 !important; cursor: not-allowed; }
+        .btn-secondary { background: var(--secondary); color: white; }
+        .btn-secondary:hover { background: var(--secondary-dark); }
+        .btn-submit { background: #059669; font-size: 15px; padding: 10px 20px; }
+        .btn-submit:hover { background: #047857; }
+        .progress-box { width: 100%; margin-top: 10px; }
+        .progress-bar-bg { width: 100%; background: #e0e0e0; height: 20px; border-radius: 10px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: var(--success); width: 0%; transition: width 0.3s ease; }
+        .progress-text { font-size: 13px; font-weight: bold; margin-top: 4px; text-align: right; color: #5f6368; }
+        .exercise-card { background: #e8f0fe; padding: 18px; border-radius: 6px; border-left: 5px solid var(--primary); margin-bottom: 20px; }
+        .instructions { font-size: 13px; color: #5f6368; margin-bottom: 25px; background: #fff8e1; padding: 15px; border-radius: 6px; border-left: 4px solid #fbbc04; line-height: 1.5; }
+        .table-section { margin-bottom: 35px; border: 1px solid var(--border); border-radius: 8px; padding: 15px; background: #fff; }
+        .table-section.price-theme { border-top: 4px solid var(--price-color); }
+        .table-section.sac-theme { border-top: 4px solid var(--sac-color); }
+        .table-section.sam-theme { border-top: 4px solid var(--sam-color); }
+        .table-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+        .price-title { color: var(--price-color); }
+        .sac-title { color: var(--sac-color); }
+        .sam-title { color: var(--sam-color); }
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        th, td { border: 1px solid var(--border); text-align: center; padding: 8px; font-size: 13px; }
+        th { background: #f1f3f4; font-weight: 600; }
+        .formula-hint { display: block; font-size: 11px; font-weight: normal; color: #5f6368; margin-top: 3px; font-family: monospace; background: #f8f9fa; padding: 2px 4px; border-radius: 3px; border: 1px dashed #ccc; }
+        input.cell-input { width: 92%; padding: 6px; border: 1px solid var(--border); border-radius: 4px; text-align: right; font-family: monospace; font-size: 12px; }
+        input.cell-input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 2px rgba(26,115,232,0.2); }
+        input.correct { background-color: var(--success-bg); border-color: var(--success); font-weight: bold; color: #137333; }
+        input.incorrect { background-color: var(--danger-bg); border-color: var(--danger); }
+        input:disabled { opacity: 0.85; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Prática de Financiamento - Sistema de Amortização Misto (SAM)</h1>
+
+    <div class="student-info">
+        <div>
+            <label for="studentName">Nome Completo do Aluno:</label>
+            <input type="text" id="studentName" placeholder="Digite seu nome completo" oninput="saveStorage()">
+        </div>
+        <div>
+            <label for="studentClass">Turma:</label>
+            <input type="text" id="studentClass" placeholder="Digite sua turma (ex: Turma A)" oninput="saveStorage()">
+        </div>
+    </div>
+    
+    <div class="header-panel">
+        <div class="controls">
+            <label><strong>Módulo:</strong></label>
+            <select id="moduleSelect" onchange="loadSelectedModule()">
+                <option value="alfa">Alfa (12 Exercícios)</option>
+                <option value="beta">Beta (12 Exercícios)</option>
+                <option value="gama">Gama (8 Exercícios)</option>
+                <option value="delta">Delta (8 Exercícios)</option>
+            </select>
+
+            <label><strong>Exercício:</strong></label>
+            <select id="exerciseSelect" onchange="changeExercise()"></select>
+        </div>
+
+        <div class="controls">
+            <button type="button" onclick="exportDraft()" class="btn-secondary">💾 Salvar Rascunho</button>
+            <button type="button" onclick="document.getElementById('importFile').click()" class="btn-secondary">📂 Carregar Rascunho</button>
+            <input type="file" id="importFile" accept=".json" style="display:none" onchange="importDraft(event)">
+            <button id="btnSubmit" onclick="submitModule()" class="btn-submit">🚀 Entregar Módulo Completo</button>
+        </div>
+
+        <div class="progress-box">
+            <div class="progress-bar-bg">
+                <div id="progressFill" class="progress-bar-fill"></div>
+            </div>
+            <div id="progressText" class="progress-text">Progresso do Módulo: 0%</div>
+        </div>
+    </div>
+
+    <div id="exerciseCard" class="exercise-card"></div>
+
+    <div class="instructions">
+        💡 <strong>Regras de Preenchimento:</strong><br>
+        1. Responda os exercícios navegando pelo menu. Seu progresso é salvo automaticamente conforme você digita.<br>
+        2. A barra de progresso reflete seu desempenho acumulado no <strong>Módulo Completo</strong>.<br>
+        3. Ao concluir, clique em <strong>🚀 Entregar Módulo Completo</strong> para enviar sua nota ao professor.
+    </div>
+
+    <!-- TABELAS -->
+    <div class="table-section price-theme">
+        <div class="table-title price-title">1. Tabela PRICE (Prestação Constante)</div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 10%;">Período (t)</th>
+                        <th style="width: 22.5%;">Amortização (A)<span class="formula-hint">= PMT - Juros</span></th>
+                        <th style="width: 22.5%;">Juros do Mês (J)<span class="formula-hint">= SD_Anterior × i</span></th>
+                        <th style="width: 22.5%;">Prestação (PMT)<span class="formula-hint">[Constante]</span></th>
+                        <th style="width: 22.5%;">Novo Saldo Devedor (SD)<span class="formula-hint">= SD_Anterior - A</span></th>
+                    </tr>
+                </thead>
+                <tbody id="priceBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="table-section sac-theme">
+        <div class="table-title sac-title">2. Tabela SAC (Amortização Constante)</div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 10%;">Período (t)</th>
+                        <th style="width: 22.5%;">Amortização (A)<span class="formula-hint">= PV / n [Constante]</span></th>
+                        <th style="width: 22.5%;">Juros do Mês (J)<span class="formula-hint">= SD_Anterior × i</span></th>
+                        <th style="width: 22.5%;">Prestação (PMT)<span class="formula-hint">= A + Juros</span></th>
+                        <th style="width: 22.5%;">Novo Saldo Devedor (SD)<span class="formula-hint">= SD_Anterior - A</span></th>
+                    </tr>
+                </thead>
+                <tbody id="sacBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="table-section sam-theme">
+        <div class="table-title sam-title">3. Tabela SAM (Sistema de Amortização Misto)</div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 10%;">Período (t)</th>
+                        <th style="width: 22.5%;">Amortização (A)<span class="formula-hint">= (A_PRICE + A_SAC) / 2</span></th>
+                        <th style="width: 22.5%;">Juros do Mês (J)<span class="formula-hint">= (J_PRICE + J_SAC) / 2</span></th>
+                        <th style="width: 22.5%;">Prestação (PMT)<span class="formula-hint">= (PMT_PRICE + PMT_SAC) / 2</span></th>
+                        <th style="width: 22.5%;">Novo Saldo Devedor (SD)<span class="formula-hint">= (SD_PRICE + SD_SAC) / 2</span></th>
+                    </tr>
+                </thead>
+                <tbody id="samBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYYeWqlDc9rvLGwMtKqHrx1O3jiYFrS4sbhDCcxA1iYDKF5TnBjtwFChyMYzXH3QQ4/exec";
+const STORAGE_KEY = "sam_simulator_data_v2";
+
+let exercisesData = {};
+let studentAnswers = {};
+let currentEx = null;
+let solutions = { price: [], sac: [], sam: [] };
+let isSubmitted = false;
+
+function initExercises() {
+    if (!loadStorage() || Object.keys(exercisesData).length === 0) {
+        exercisesData = {
+            alfa: generateExercises(12, "Alfa", 10000, 50000, 0.01, 0.03, 4, 6),
+            beta: generateExercises(12, "Beta", 50000, 150000, 0.015, 0.035, 5, 8),
+            gama: generateExercises(8, "Gama", 80000, 200000, 0.02, 0.04, 6, 10),
+            delta: generateExercises(8, "Delta", 100000, 300000, 0.01, 0.025, 6, 12)
+        };
+        saveStorage();
+    }
+}
+
+function generateExercises(count, prefix, minVP, maxVP, minI, maxI, minN, maxN) {
+    let list = [];
+    for(let i = 1; i <= count; i++) {
+        let vp = Math.round((Math.random() * (maxVP - minVP) + minVP) / 1000) * 1000;
+        let rate = Number((Math.random() * (maxI - minI) + minI).toFixed(4));
+        let n = Math.floor(Math.random() * (maxN - minN + 1)) + minN;
+        list.push({ id: `${prefix}_${i}`, title: `Exercício ${i} (${prefix})`, vp: vp, i: rate, n: n });
+    }
+    return list;
+}
+
+function saveStorage() {
+    const data = {
+        studentName: document.getElementById("studentName").value.trim(),
+        studentClass: document.getElementById("studentClass").value.trim(),
+        module: document.getElementById("moduleSelect").value,
+        exerciseIdx: document.getElementById("exerciseSelect").value || 0,
+        exercisesData: exercisesData,
+        studentAnswers: studentAnswers
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function loadStorage() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return false;
+    try {
+        const data = JSON.parse(saved);
+        exercisesData = data.exercisesData || {};
+        studentAnswers = data.studentAnswers || {};
+        if (data.studentName) document.getElementById("studentName").value = data.studentName;
+        if (data.studentClass) document.getElementById("studentClass").value = data.studentClass;
+        if (data.module) document.getElementById("moduleSelect").value = data.module;
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+function onCellInput(input) {
+    if (!currentEx || isSubmitted) return;
+    const t = input.getAttribute("data-t");
+    if (t === "0") return;
+
+    const tableKey = input.getAttribute("data-table");
+    const col = input.getAttribute("data-col");
+    const key = `${tableKey}_${t}_${col}`;
+
+    if (!studentAnswers[currentEx.id]) {
+        studentAnswers[currentEx.id] = {};
+    }
+    studentAnswers[currentEx.id][key] = input.value;
+    
+    saveStorage();
+    validateCell(input);
+}
+
+function loadSelectedModule() {
+    const mod = document.getElementById("moduleSelect").value;
+    const exSelect = document.getElementById("exerciseSelect");
+    exSelect.innerHTML = "";
+    exercisesData[mod].forEach((ex, idx) => {
+        let opt = document.createElement("option");
+        opt.value = idx;
+        opt.textContent = ex.title;
+        exSelect.appendChild(opt);
+    });
+    loadExercise();
+}
+
+function changeExercise() {
+    saveStorage();
+    loadExercise();
+}
+
+function calculateAllTables(vp, rate, n) {
+    let pmt_price = vp * (rate * Math.pow(1 + rate, n)) / (Math.pow(1 + rate, n) - 1);
+    let price_rows = [{ t: 0, sd: vp, a: 0, j: 0, pmt: 0 }];
+    let sd_p = vp;
+    for(let t = 1; t <= n; t++) {
+        let j_p = sd_p * rate;
+        let a_p = pmt_price - j_p;
+        sd_p -= a_p;
+        price_rows.push({ t: t, sd: Number(sd_p.toFixed(2)), a: Number(a_p.toFixed(2)), j: Number(j_p.toFixed(2)), pmt: Number(pmt_price.toFixed(2)) });
+    }
+
+    let a_sac = vp / n;
+    let sac_rows = [{ t: 0, sd: vp, a: 0, j: 0, pmt: 0 }];
+    let sd_s = vp;
+    for(let t = 1; t <= n; t++) {
+        let j_s = sd_s * rate;
+        let pmt_s = a_sac + j_s;
+        sd_s -= a_sac;
+        sac_rows.push({ t: t, sd: Number(sd_s.toFixed(2)), a: Number(a_sac.toFixed(2)), j: Number(j_s.toFixed(2)), pmt: Number(pmt_s.toFixed(2)) });
+    }
+
+    let sam_rows = [{ t: 0, sd: vp, a: 0, j: 0, pmt: 0 }];
+    let sd_sam = vp;
+    for(let t = 1; t <= n; t++) {
+        let a_m = (price_rows[t].a + sac_rows[t].a) / 2;
+        let j_m = (price_rows[t].j + sac_rows[t].j) / 2;
+        let pmt_m = (price_rows[t].pmt + sac_rows[t].pmt) / 2;
+        sd_sam -= a_m;
+        sam_rows.push({ t: t, sd: Number(sd_sam.toFixed(2)), a: Number(a_m.toFixed(2)), j: Number(j_m.toFixed(2)), pmt: Number(pmt_m.toFixed(2)) });
+    }
+
+    return { price: price_rows, sac: sac_rows, sam: sam_rows };
+}
+
+function loadExercise() {
+    const mod = document.getElementById("moduleSelect").value;
+    const idx = document.getElementById("exerciseSelect").value || 0;
+    currentEx = exercisesData[mod][idx];
+    solutions = calculateAllTables(currentEx.vp, currentEx.i, currentEx.n);
+
+    document.getElementById("exerciseCard").innerHTML = `
+        <h3>${currentEx.title}</h3>
+        <p><strong>Valor Financiado (PV):</strong> R$ ${currentEx.vp.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+        <p><strong>Taxa de Juros (i):</strong> ${(currentEx.i * 100).toFixed(2)}% ao mês</p>
+        <p><strong>Prazo (n):</strong> ${currentEx.n} meses</p>
+    `;
+
+    renderSingleTable("priceBody", "price", solutions.price);
+    renderSingleTable("sacBody", "sac", solutions.sac);
+    renderSingleTable("samBody", "sam", solutions.sam);
+
+    restoreCurrentTableInputs();
+}
+
+function renderSingleTable(tbodyId, tableKey, rows) {
+    const tbody = document.getElementById(tbodyId);
+    tbody.innerHTML = "";
+
+    rows.forEach((row, t) => {
+        let tr = document.createElement("tr");
+        if(t === 0) {
+            tr.innerHTML = `
+                <td>0</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td><input class="cell-input" data-table="${tableKey}" data-t="0" data-col="sd" value="R$ ${row.sd.toFixed(2)}" disabled></td>
+            `;
+        } else {
+            let isPricePmt = (tableKey === "price");
+            let pmtVal = isPricePmt ? `value="R$ ${row.pmt.toFixed(2)}"` : "";
+            let pmtClass = isPricePmt ? "cell-input correct" : "cell-input";
+            let pmtValid = isPricePmt ? 'data-valid="true"' : "";
+            let placeholderText = (tableKey === "sam") ? "Ex: =(VALOR_PRICE + VALOR_SAC)/2" : "Ex: 1234.56 ou fórmula";
+
+            tr.innerHTML = `
+                <td>${t}</td>
+                <td><input class="cell-input" data-table="${tableKey}" data-t="${t}" data-col="a" placeholder="${placeholderText}" oninput="onCellInput(this)" onblur="validateCell(this)" onkeydown="handleEnter(event, this)"></td>
+                <td><input class="cell-input" data-table="${tableKey}" data-t="${t}" data-col="j" placeholder="${placeholderText}" oninput="onCellInput(this)" onblur="validateCell(this)" onkeydown="handleEnter(event, this)"></td>
+                <td><input class="${pmtClass}" data-table="${tableKey}" data-t="${t}" data-col="pmt" ${pmtVal} ${pmtValid} placeholder="${placeholderText}" oninput="onCellInput(this)" onblur="validateCell(this)" onkeydown="handleEnter(event, this)"></td>
+                <td><input class="cell-input" data-table="${tableKey}" data-t="${t}" data-col="sd" placeholder="${placeholderText}" oninput="onCellInput(this)" onblur="validateCell(this)" onkeydown="handleEnter(event, this)"></td>
+            `;
+        }
+        tbody.appendChild(tr);
+    });
+}
+
+function restoreCurrentTableInputs() {
+    if (!currentEx || !studentAnswers[currentEx.id]) {
+        updateModuleProgress();
+        return;
+    }
+
+    const saved = studentAnswers[currentEx.id];
+
+    document.querySelectorAll(".cell-input[data-table]").forEach(inp => {
+        const t = inp.getAttribute("data-t");
+        if (t !== "0") {
+            const tableKey = inp.getAttribute("data-table");
+            const col = inp.getAttribute("data-col");
+            const key = `${tableKey}_${t}_${col}`;
+            if (saved[key] !== undefined) {
+                inp.value = saved[key];
+            }
+        }
+    });
+
+    document.querySelectorAll(".cell-input[data-table]").forEach(inp => {
+        const t = inp.getAttribute("data-t");
+        if (t !== "0" && inp.value.trim() !== "") {
+            validateCell(inp, true);
+        }
+    });
+
+    updateModuleProgress();
+}
+
+function evaluateFormula(inputStr) {
+    if (!inputStr) return null;
+    let clean = inputStr.trim().replace(/R\$/gi, '').replace(/\$/g, '').trim();
+    if(clean.startsWith("=")) clean = clean.substring(1);
+    if (clean.includes(',')) clean = clean.replace(/\./g, '').replace(/,/g, '.');
+    clean = clean.replace(/;/g, ',').replace(/(\d+(?:\.\d+)?)%/g, '($1/100)');
+    
+    function PGTO(rate, n, pv) {
+        pv = Math.abs(pv);
+        return pv * (rate * Math.pow(1 + rate, n)) / (Math.pow(1 + rate, n) - 1);
+    }
+
+    try {
+        if(/^[0-9+\-*/().\sA-Za-z]+$/.test(clean)) {
+            return Function('PGTO', `'use strict'; return (${clean})`)(PGTO);
+        }
+    } catch(e) { return null; }
+    return null;
+}
+
+function validateCell(input, skipProgress = false) {
+    if (!input.value.trim()) {
+        input.classList.remove("correct", "incorrect");
+        input.dataset.valid = "false";
+        if (!skipProgress) updateModuleProgress();
+        return;
+    }
+    const tableKey = input.getAttribute("data-table");
+    const t = parseInt(input.getAttribute("data-t"));
+    const col = input.getAttribute("data-col");
+    
+    if (!solutions[tableKey] || !solutions[tableKey][t]) return;
+
+    const expectedVal = solutions[tableKey][t][col];
+    let userResult = evaluateFormula(input.value);
+
+    if (userResult !== null && Math.abs(userResult - expectedVal) <= 0.05) {
+        input.classList.remove("incorrect");
+        input.classList.add("correct");
+        input.value = `R$ ${expectedVal.toFixed(2)}`;
+        input.dataset.valid = "true";
+    } else {
+        input.classList.remove("correct");
+        input.classList.add("incorrect");
+        input.dataset.valid = "false";
+    }
+    if (!skipProgress) updateModuleProgress();
+}
+
+function handleEnter(event, input) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        validateCell(input);
+    }
+}
+
+function updateModuleProgress() {
+    const mod = document.getElementById("moduleSelect").value;
+    const moduleExercises = exercisesData[mod];
+    if (!moduleExercises) return { correctGaps: 0, totalGaps: 0, percent: 0 };
+
+    let totalGaps = 0;
+    let correctGaps = 0;
+
+    moduleExercises.forEach(ex => {
+        let sol = calculateAllTables(ex.vp, ex.i, ex.n);
+        let exSaved = studentAnswers[ex.id] || {};
+
+        ['price', 'sac', 'sam'].forEach(tKey => {
+            sol[tKey].forEach((row, t) => {
+                if (t > 0) {
+                    ['a', 'j', 'pmt', 'sd'].forEach(colKey => {
+                        totalGaps++;
+                        let userVal = exSaved[`${tKey}_${t}_${colKey}`];
+                        if (tKey === 'price' && colKey === 'pmt') {
+                            correctGaps++;
+                        } else if (userVal) {
+                            let res = evaluateFormula(userVal);
+                            if (res !== null && Math.abs(res - row[colKey]) <= 0.05) {
+                                correctGaps++;
+                            }
+                        }
+                    });
+                }
+            });
+        });
+    });
+
+    let percent = totalGaps > 0 ? Math.round((correctGaps / totalGaps) * 100) : 0;
+    document.getElementById("progressFill").style.width = `${percent}%`;
+    document.getElementById("progressText").textContent = `Progresso do Módulo (${mod.toUpperCase()}): ${percent}% (${correctGaps}/${totalGaps} lacunas em ${moduleExercises.length} exercícios)`;
+
+    return { correctGaps, totalGaps, percent };
+}
+
+function exportDraft() {
+    saveStorage();
+    const draft = {
+        name: document.getElementById("studentName").value.trim(),
+        turma: document.getElementById("studentClass").value.trim(),
+        module: document.getElementById("moduleSelect").value,
+        exerciseIdx: document.getElementById("exerciseSelect").value,
+        exercisesData: exercisesData,
+        studentAnswers: studentAnswers
+    };
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(draft, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    const fileName = draft.name ? `rascunho_SAM_${draft.name.replace(/\s+/g, '_')}.json` : "rascunho_SAM.json";
+    downloadAnchor.setAttribute("download", fileName);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+}
+
+function importDraft(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const draft = JSON.parse(e.target.result);
+
+            if (draft.exercisesData) exercisesData = draft.exercisesData;
+            if (draft.studentAnswers) studentAnswers = draft.studentAnswers;
+            if (draft.name) document.getElementById("studentName").value = draft.name;
+            if (draft.turma) document.getElementById("studentClass").value = draft.turma;
+
+            saveStorage();
+
+            if (draft.module) {
+                document.getElementById("moduleSelect").value = draft.module;
+                loadSelectedModule();
+            }
+            if (draft.exerciseIdx !== undefined) {
+                document.getElementById("exerciseSelect").value = draft.exerciseIdx;
+                loadExercise();
+            }
+
+            alert("✅ Rascunho completo do módulo carregado com sucesso!");
+        } catch (err) {
+            alert("⚠️ Erro ao carregar o arquivo de rascunho. Verifique se o arquivo .json é válido.");
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = "";
+}
+
+function submitModule() {
+    const name = document.getElementById("studentName").value.trim();
+    const turma = document.getElementById("studentClass").value.trim();
+    const mod = document.getElementById("moduleSelect").value.toUpperCase();
+
+    if (!name) {
+        alert("⚠️ Por favor, preencha o seu Nome Completo antes de entregar!");
+        document.getElementById("studentName").focus();
+        return;
+    }
+
+    const { correctGaps, totalGaps, percent } = updateModuleProgress();
+
+    if (!confirm(`Atenção ${name}!\n\nVocê deseja ENTREGAR O MÓDULO ${mod} COMPLETO?\n\n• Rendimento Global: ${percent}%\n• Acertos totais: ${correctGaps} de ${totalGaps}\n\nApós a confirmação, o módulo será finalizado.`)) {
+        return;
+    }
+
+    isSubmitted = true;
+    document.querySelectorAll("input, select").forEach(el => el.disabled = true);
+    document.getElementById("btnSubmit").disabled = true;
+    document.getElementById("btnSubmit").textContent = "🔒 Módulo Entregue";
+
+    const payload = {
+        nome: name,
+        turma: turma || "Não informada",
+        modulo: mod,
+        exercicio: `MÓDULO ${mod} COMPLETO`,
+        acertos: `${correctGaps}/${totalGaps}`,
+        rendimento: percent
+    };
+
+    if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL.startsWith("http")) {
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        }).then(() => {
+            alert("✅ Módulo entregue e respostas consolidadas na planilha do professor!");
+        }).catch(err => {
+            alert("⚠️ Exercício finalizado localmente, mas houve um erro ao enviar para a planilha.");
+        });
+    } else {
+        alert(`✅ Módulo Finalizado!\n\nNome: ${name}\nTurma: ${turma}\nMódulo: ${mod}\nRendimento: ${percent}%\nAcertos: ${correctGaps}/${totalGaps}`);
+    }
+}
+
+window.onload = function() {
+    initExercises();
+    loadSelectedModule();
+};
+</script>
+</body>
+</html>
